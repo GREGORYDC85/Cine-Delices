@@ -1,12 +1,11 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// Configuration de Vite
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 3000, // Assure-toi que ce port est bien configuré
-    open: true, // Ouvre automatiquement dans le navigateur à chaque démarrage
+    port: 8080, // Vérifie que le port est bien 3000
+    open: true, // Ouvre automatiquement dans le navigateur
   },
-  base: "./", // Important pour les chemins relatifs si tu déploies plus tard
+  base: "/", // Assure que la base est bien définie
 });
