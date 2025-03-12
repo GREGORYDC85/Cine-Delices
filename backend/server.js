@@ -103,7 +103,7 @@ app.get("/", (req, res) => {
 });
 
 // 📌 Démarrer le serveur
-const PORT = 5000;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-  console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
+  console.log(`✅ Serveur démarré sur ${PORT}`);
 });

@@ -12,18 +12,34 @@ function Login() {
     e.preventDefault();
 
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/login", {
+      // Envoie de la requête pour se connecter
+      const response = await axios.post("http://localhost:5000/auth/login", {
         email,
         password,
       });
 
-      // Sauvegarder le token dans le localStorage
-      localStorage.setItem("token", response.data.token);
+      // Vérification de la réponse avant de stocker le token
+      console.log("Réponse du serveur:", response);
 
-      // Rediriger l'utilisateur vers le dashboard ou la page d'accueil
-      navigate("/dashboard");
+      if (response.data.token) {
+        // Sauvegarder le token dans localStorage
+        localStorage.setItem("token", response.data.token);
+        console.log("Token sauvegardé:", response.data.token);
+
+        // Rediriger l'utilisateur vers le dashboard ou la page d'accueil
+        navigate("/dashboard");
+      } else {
+        setError("Le token n'a pas été reçu.");
+      }
     } catch (err) {
-      setError("Identifiants incorrects");
+      // Gestion des erreurs renvoyées par le backend
+      if (err.response) {
+        setError(err.response.data.error || "Une erreur est survenue");
+        console.error("Erreur de connexion:", err.response.data.error);
+      } else {
+        setError("Identifiants incorrects");
+        console.error("Erreur de connexion:", err);
+      }
     }
   };
 
