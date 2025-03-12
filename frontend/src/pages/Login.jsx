@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";  // Assurez-vous d'avoir axios installé pour faire des requêtes HTTP
+import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -12,36 +13,25 @@ function Login() {
     e.preventDefault();
 
     try {
-      // Envoie de la requête pour se connecter
-      const response = await axios.post("http://localhost:5000/auth/login", {
-        email,
-        password,
-      });
-
-      // Vérification de la réponse avant de stocker le token
-      console.log("Réponse du serveur:", response);
+      const response = await axios.post("http://localhost:5000/auth/login", { email, password });
 
       if (response.data.token) {
-        // Sauvegarder le token dans localStorage
         localStorage.setItem("token", response.data.token);
-        console.log("Token sauvegardé:", response.data.token);
 
-        // Rediriger l'utilisateur vers le dashboard ou la page d'accueil
-        navigate("/dashboard");
-      } else {
-        setError("Le token n'a pas été reçu.");
+        // ✅ Décoder immédiatement l'utilisateur et sauvegarder
+        const userDecoded = jwtDecode(response.data.token);
+        localStorage.setItem("user", JSON.stringify(userDecoded));
+
+        navigate("/");
       }
     } catch (err) {
-      // Gestion des erreurs renvoyées par le backend
-      if (err.response) {
-        setError(err.response.data.error || "Une erreur est survenue");
-        console.error("Erreur de connexion:", err.response.data.error);
+      if (err.response && err.response.data.error) {
+        setError(err.response.data.error);
       } else {
-        setError("Identifiants incorrects");
-        console.error("Erreur de connexion:", err);
+        setError("Erreur de connexion");
       }
     }
-  };
+  }
 
   return (
     <div className="container">
