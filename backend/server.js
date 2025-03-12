@@ -10,10 +10,10 @@ app.use(express.json());
 
 // 📌 Connexion à la base de données MySQL
 const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "1234", // Vérifie que c'est bien ton mot de passe MySQL
-  database: "cine_delices",
+  host: process.env.DB_HOST || "localhost",
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "1234",
+  database: process.env.DB_NAME || "cine_delices",
 });
 
 // 📌 Vérifier la connexion à MySQL
@@ -27,10 +27,7 @@ db.connect((err) => {
 
 // 📌 Importer les routes d'authentification
 const authRoutes = require("./routes/auth");
-app.use("/auth", authRoutes); // ✅ Ajoute les routes d'authentification
-
-// 📌 Importer le middleware d'authentification
-const authenticateUser = require("./middleware/auth");
+app.use("/auth", authRoutes);
 
 // 📌 Importer les routes utilisateur (profil sécurisé)
 const userRoutes = require("./routes/user");
@@ -38,14 +35,14 @@ app.use("/user", userRoutes);
 
 // 📌 Importer les routes admin
 const adminRoutes = require("./routes/admin");
-app.use("/admin", adminRoutes); // ✅ Active les routes admin
+app.use("/admin", adminRoutes);
 
-// 📌 Importer le middleware authorizeAdmin (rôle admin uniquement)
+// 📌 Importer les middlewares
+const authenticateUser = require("./middleware/auth");
 const authorizeAdmin = require("./middleware/admin");
 
 // 📌 Route protégée pour le tableau de bord (admin uniquement)
 app.get("/admin/dashboard", authenticateUser, authorizeAdmin, (req, res) => {
-  // Si l'utilisateur est authentifié et a le rôle "admin", alors il accède au tableau de bord
   res.json({ message: "Bienvenue sur le tableau de bord Admin" });
 });
 
@@ -63,8 +60,7 @@ app.get("/recipes", (req, res) => {
   db.query(sql, (err, result) => {
     if (err) {
       console.error("❌ Erreur lors de la récupération des recettes :", err);
-      res.status(500).json({ error: "Erreur serveur" });
-      return;
+      return res.status(500).json({ error: "Erreur serveur" });
     }
     res.json(result);
   });
@@ -85,8 +81,7 @@ app.get("/recipes/:id", (req, res) => {
   db.query(sql, [recipeId], (err, result) => {
     if (err) {
       console.error("❌ Erreur lors de la récupération de la recette :", err);
-      res.status(500).json({ error: "Erreur serveur" });
-      return;
+      return res.status(500).json({ error: "Erreur serveur" });
     }
     res.json(result.length ? result[0] : { message: "Recette non trouvée" });
   });
@@ -102,8 +97,8 @@ app.get("/", (req, res) => {
   res.send("🚀 API CineDélices fonctionne !");
 });
 
-// 📌 Démarrer le serveur
-const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {
-  console.log(`✅ Serveur démarré sur ${PORT}`);
+// 📌 Démarrer le serveur sur un port dynamique automatique
+const PORT = process.env.PORT || 0;
+app.listen(PORT, function () {
+  console.log(`✅ Serveur démarré sur le port ${this.address().port}`);
 });

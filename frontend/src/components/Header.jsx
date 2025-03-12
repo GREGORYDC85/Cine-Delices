@@ -1,15 +1,23 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { jwtDecode } from 'jwt-decode';
 
 function Header() {
   const navigate = useNavigate();
-  
-  // Vérifier si un token est présent dans le localStorage (indiquant que l'utilisateur est connecté)
-  const isAuthenticated = localStorage.getItem('token');
+  const [user, setUser] = useState(null); // ✅ Déclaration correcte du state user
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decodedUser = jwtDecode(token);
+      setUser(decodedUser);
+    }
+  }, []);
 
   const handleLogout = () => {
-    // Supprimer le token du localStorage pour se déconnecter
-    localStorage.removeItem('token');
-    navigate('/login'); // Rediriger vers la page de connexion
+    localStorage.removeItem("token");
+    setUser(null);
+    navigate("/login");
   };
 
   return (
@@ -18,18 +26,19 @@ function Header() {
       <nav className="navbar">
         <Link to="/">Accueil</Link>
         <Link to="/recipes">Recettes</Link>
-        {/* Si l'utilisateur est connecté, afficher "Mon Profil" et "Déconnexion" */}
-        {isAuthenticated && (
+
+        {user && user.role === "admin" && (
+          <Link to="/admin/dashboard">Dashboard Admin</Link>
+        )}
+
+        {user && (
           <>
-            <Link to="/profile">Mon Profil</Link>
-            <Link to="/dashboard">Dashboard</Link>
-            <button className="logout-button" onClick={handleLogout}>
-              Déconnexion
-            </button>
+            <Link to="/profile">Profil</Link>
+            <button onClick={handleLogout}>Déconnexion</button>
           </>
         )}
-        {/* Si l'utilisateur n'est pas connecté, afficher "Se connecter" et "S'inscrire" */}
-        {!isAuthenticated && (
+
+        {!user && (
           <>
             <Link to="/login">Se connecter</Link>
             <Link to="/signup">S'inscrire</Link>
