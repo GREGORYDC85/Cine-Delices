@@ -1,71 +1,76 @@
-/* Global Styles */
-body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f0f0f0; /* Gris clair */
-    color: #333; /* Gris foncé pour le texte */
-    margin: 0;
-    padding: 0;
-  }
-  
-  h1, h2, h3 {
-    font-family: 'Helvetica', sans-serif;
-    color: #FFD700; /* Jaune pour les titres */
-  }
-  
-  /* Header */
-  .header {
+/* Header */
+.header {
     background-color: #242424; /* Noir */
     color: white;
     padding: 20px;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
   }
   
   .header h1 {
     font-size: 2.5em;
-  }
-  
-  /* Home Section */
-  .home {
-    text-align: center;
-    padding: 40px;
-  }
-  
-  .home h1 {
-    font-size: 3em;
     color: #FFD700; /* Jaune */
+    margin-bottom: 20px; /* Espacement sous le titre pour séparer des liens */
   }
   
-  .home p {
-    font-size: 1.5em;
-    color: #808080; /* Gris */
-    margin: 20px 0;
+  /* Navigation */
+  .navbar {
+    display: flex;
+    flex-direction: row; /* Disposition des liens en ligne pour le menu principal */
+    width: 100%;
+    justify-content: center; /* Centrer les liens principaux */
+    gap: 20px; /* Espacement entre "Accueil" et "Recettes" */
+    margin-top: 20px;
   }
   
-  /* Buttons */
-  button {
-    background-color: #FFD700; /* Jaune */
+  /* Liens "Accueil" et "Recettes" sous le titre */
+  .navbar a {
+    color: #FFD700; /* Jaune */
+    text-decoration: none;
+    font-size: 1.2em;
+  }
+  
+  .navbar a:hover {
+    color: #FFCC00; /* Jaune foncé au survol */
+  }
+  
+  /* Alignement à droite pour "Connexion" et "Inscription" */
+  .right-links {
+    position: absolute;
+    right: 20px;
+    top: 50%; /* Centre verticalement par rapport à la hauteur du header */
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Espacement vertical */
+    align-items: flex-end; /* Aligner les éléments à droite */
+  }
+  
+  .right-links a {
+    color: #FFD700; /* Jaune */
+    text-decoration: none;
+    font-size: 1.2em;
+  }
+  
+  .right-links a:hover {
+    color: #FFCC00; /* Jaune foncé au survol */
+  }
+  
+  /* Ajout d'un effet sur le bouton de déconnexion */
+  .logout-button {
+    background-color: #FFD700;
     border: none;
     color: black;
-    padding: 15px 30px;
-    font-size: 1.2em;
+    padding: 10px 20px;
     cursor: pointer;
+    font-size: 1.2em;
     border-radius: 5px;
   }
   
-  button:hover {
+  .logout-button:hover {
     background-color: #ffcc00; /* Jaune foncé */
-  }
-  
-  /* Footer */
-  .footer {
-    background-color: #242424; /* Noir */
-    color: white;
-    padding: 20px;
-    text-align: center;
-  }
-  
-  .footer p {
-    font-size: 1em;
-    color: #808080; /* Gris */
   }
   

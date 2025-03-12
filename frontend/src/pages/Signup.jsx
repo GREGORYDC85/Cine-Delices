@@ -27,7 +27,7 @@ function Signup() {
     setSuccessMessage(""); // Réinitialiser le message de succès
 
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/register", formData);
+      const response = await axios.post("http://localhost:5000/auth/register", formData);
       setSuccessMessage(response.data.message); // Message de succès après inscription
     } catch (err) {
       setError(err.response ? err.response.data.error : "Erreur inconnue"); // Afficher l'erreur
