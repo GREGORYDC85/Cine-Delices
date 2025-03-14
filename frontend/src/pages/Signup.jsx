@@ -1,5 +1,8 @@
 import { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function Signup() {
   const [formData, setFormData] = useState({
@@ -8,8 +11,8 @@ function Signup() {
     email: "",
     password: "",
   });
-  const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+
+  const navigate = useNavigate();
 
   // Gérer les changements dans les champs du formulaire
   const handleChange = (e) => {
@@ -23,14 +26,18 @@ function Signup() {
   // Soumettre le formulaire
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Réinitialiser les erreurs
-    setSuccessMessage(""); // Réinitialiser le message de succès
 
     try {
-      const response = await axios.post("http://localhost:5000/auth/register", formData);
-      setSuccessMessage(response.data.message); // Message de succès après inscription
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/auth/register`, 
+        formData
+      );
+
+      toast.success("🎉 Inscription réussie ! Redirection...");
+      setTimeout(() => navigate("/login"), 2000); // Redirection après 2s
     } catch (err) {
-      setError(err.response ? err.response.data.error : "Erreur inconnue"); // Afficher l'erreur
+      const errorMessage = err.response?.data?.error || "❌ Erreur serveur";
+      toast.error(errorMessage);
     }
   };
 
@@ -84,8 +91,6 @@ function Signup() {
         </div>
         <button type="submit">S'inscrire</button>
       </form>
-      {error && <p className="error">{error}</p>}
-      {successMessage && <p className="success">{successMessage}</p>}
     </div>
   );
 }

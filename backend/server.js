@@ -16,25 +16,21 @@ const db = mysql.createConnection({
   database: process.env.DB_NAME || "cine_delices",
 });
 
-// 📌 Vérifier la connexion à MySQL
 db.connect((err) => {
   if (err) {
     console.error("❌ Erreur de connexion à MySQL:", err);
-    return;
+    process.exit(1); // Arrête le serveur si la connexion échoue
   }
   console.log("✅ Connecté à MySQL");
 });
 
-// 📌 Importer les routes d'authentification
+// 📌 Importer les routes
 const authRoutes = require("./routes/auth");
-app.use("/auth", authRoutes);
-
-// 📌 Importer les routes utilisateur (profil sécurisé)
 const userRoutes = require("./routes/user");
-app.use("/user", userRoutes);
-
-// 📌 Importer les routes admin
 const adminRoutes = require("./routes/admin");
+
+app.use("/auth", authRoutes);
+app.use("/user", userRoutes);
 app.use("/admin", adminRoutes);
 
 // 📌 Importer les middlewares
@@ -46,59 +42,23 @@ app.get("/admin/dashboard", authenticateUser, authorizeAdmin, (req, res) => {
   res.json({ message: "Bienvenue sur le tableau de bord Admin" });
 });
 
-// 📌 Route API pour récupérer toutes les recettes et leurs films/séries associés
-app.get("/recipes", (req, res) => {
-  const sql = `
-    SELECT r.code_recipe, r.name AS recipe_name, r.picture, r.description, 
-           w.title AS film_serie
-    FROM recipe r
-    LEFT JOIN recipe_work rw ON r.code_recipe = rw.code_recipe
-    LEFT JOIN work w ON rw.code_work = w.code_work
-    ORDER BY r.code_recipe;
-  `;
-
-  db.query(sql, (err, result) => {
-    if (err) {
-      console.error("❌ Erreur lors de la récupération des recettes :", err);
-      return res.status(500).json({ error: "Erreur serveur" });
-    }
-    res.json(result);
-  });
-});
-
-// 📌 Route API pour récupérer une recette par ID
-app.get("/recipes/:id", (req, res) => {
-  const recipeId = req.params.id;
-  const sql = `
-    SELECT r.code_recipe, r.name AS recipe_name, r.picture, r.description, 
-           w.title AS film_serie
-    FROM recipe r
-    LEFT JOIN recipe_work rw ON r.code_recipe = rw.code_recipe
-    LEFT JOIN work w ON rw.code_work = w.code_work
-    WHERE r.code_recipe = ? 
-  `;
-
-  db.query(sql, [recipeId], (err, result) => {
-    if (err) {
-      console.error("❌ Erreur lors de la récupération de la recette :", err);
-      return res.status(500).json({ error: "Erreur serveur" });
-    }
-    res.json(result.length ? result[0] : { message: "Recette non trouvée" });
-  });
-});
-
-// 📌 Route protégée pour afficher le profil utilisateur
-app.get("/user/profile", authenticateUser, (req, res) => {
-  res.json({ message: "Profil utilisateur sécurisé", user: req.user });
-});
-
 // 📌 Route de test pour voir si le serveur tourne
 app.get("/", (req, res) => {
   res.send("🚀 API CineDélices fonctionne !");
 });
 
-// 📌 Démarrer le serveur sur un port dynamique automatique
-const PORT = process.env.PORT || 0;
-app.listen(PORT, function () {
-  console.log(`✅ Serveur démarré sur le port ${this.address().port}`);
+// 📌 Vérifier si le port 5001 est déjà utilisé et le libérer si nécessaire
+const PORT = process.env.PORT || 5001;
+const server = app.listen(PORT, () => {
+  console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
+});
+
+// 📌 Gérer les erreurs de démarrage (ex: port déjà utilisé)
+server.on("error", (err) => {
+  if (err.code === "EADDRINUSE") {
+    console.error(`❌ Port ${PORT} déjà utilisé. Tente de libérer le port...`);
+    process.exit(1); // Arrête proprement le serveur
+  } else {
+    console.error("❌ Erreur serveur :", err);
+  }
 });
