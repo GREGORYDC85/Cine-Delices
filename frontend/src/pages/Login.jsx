@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
@@ -8,16 +8,25 @@ import "react-toastify/dist/ReactToastify.css";
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false); // 🔄 Indicateur de chargement
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // 📌 Récupérer l'URL du backend depuis le fichier .env
+  // 📌 Récupérer l'URL du backend
   const API_URL = import.meta.env.VITE_API_URL;
 
-  if (!API_URL) {
-    console.error("❌ VITE_API_URL non défini ! Vérifie ton .env.");
-    toast.error("⚠️ Erreur serveur : API_URL non configuré.");
-  }
+  useEffect(() => {
+    if (!API_URL) {
+      console.error("❌ Erreur: VITE_API_URL non défini !");
+      toast.error("⚠️ Erreur serveur : API_URL non configuré.");
+    }
+
+    // 📌 Vérifier si l'utilisateur est déjà connecté
+    const token = localStorage.getItem("token");
+    if (token) {
+      console.log("🔄 Redirection automatique : utilisateur déjà connecté.");
+      navigate("/dashboard");
+    }
+  }, [API_URL, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,36 +36,42 @@ function Login() {
       return;
     }
 
-    setLoading(true); // 🔄 Empêche les clics multiples
+    setLoading(true);
 
     try {
       console.log("🔄 Tentative de connexion avec :", email);
 
-      // ✅ Envoi des données au backend
       const { data } = await axios.post(`${API_URL}/auth/login`, { email, password });
 
       console.log("✅ Réponse reçue du backend :", data);
 
-      // 🔥 Vérification du token reçu
       if (!data.token) {
-        throw new Error("Token non reçu du serveur.");
+        throw new Error("❌ Aucun token reçu du serveur.");
       }
 
-      // ✅ Stockage du token et des infos utilisateur
+      // ✅ Stockage sécurisé du token et des infos utilisateur
       localStorage.setItem("token", data.token);
       const user = jwtDecode(data.token);
       localStorage.setItem("user", JSON.stringify(user));
 
-      // ✅ Affichage de succès et redirection
-      toast.success("🎉 Connexion réussie !");
-      setEmail("");  // Nettoyage du champ email
-      setPassword("");  // Nettoyage du champ password
+      console.log("✅ Token stocké avec succès :", localStorage.getItem("token"));
+      console.log("👤 Utilisateur stocké :", localStorage.getItem("user"));
 
-      // 🔄 Petit délai pour fluidifier l'expérience utilisateur
+      // ✅ Affichage de succès et redirection selon le rôle
+      toast.success("🎉 Connexion réussie !");
+      setEmail("");
+      setPassword("");
+
       setTimeout(() => {
-        navigate("/"); // 🔄 Redirection vers la page d'accueil
+        if (user.role === "admin") {
+          console.log("🚀 Redirection vers le Dashboard Admin");
+          navigate("/admin/dashboard");
+        } else {
+          console.log("🚀 Redirection vers la page d'accueil");
+          navigate("/");
+        }
       }, 1000);
-      
+
     } catch (err) {
       console.error("❌ Erreur de connexion :", err);
 
@@ -67,7 +82,7 @@ function Login() {
         toast.error(errorMessage);
       }
     } finally {
-      setLoading(false); // ✅ Réactive le bouton après la requête
+      setLoading(false);
     }
   };
 
