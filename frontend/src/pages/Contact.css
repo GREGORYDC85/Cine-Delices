@@ -1,0 +1,17 @@
+.contact-container {
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .contact-mail {
+    color: #d4a017; /* Jaune foncé (doré) */
+    font-weight: bold;
+    text-decoration: none;
+    font-size: 18px;
+  }
+  
+  .contact-mail:hover {
+    text-decoration: underline;
+    color: #b8860b; /* Un peu plus foncé au survol */
+  }
+  
