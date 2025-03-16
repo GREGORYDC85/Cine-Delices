@@ -1,0 +1,12 @@
+.recipe-detail {
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .recipe-detail img {
+    width: 50%;
+    max-width: 500px;
+    border-radius: 10px;
+    margin: 20px 0;
+  }
+  
