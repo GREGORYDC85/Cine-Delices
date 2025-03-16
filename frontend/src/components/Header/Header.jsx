@@ -33,7 +33,7 @@ function Header() {
 
         {/* ✅ Titre centré + Lien "Recettes" dessous */}
         <div className="header-center">
-          <h1 className="site-title">Ciné Délices</h1>
+          <h1 className="site-title">🎬Ciné Délices🍿</h1>
           <Link to="/recipes" className="recipes-link">Recettes</Link>
         </div>
 

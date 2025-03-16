@@ -1,0 +1,24 @@
+.plan-du-site {
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .plan-du-site ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .plan-du-site li {
+    margin: 10px 0;
+  }
+  
+  .plan-du-site a {
+    text-decoration: none;
+    color: black;
+    font-weight: bold;
+  }
+  
+  .plan-du-site a:hover {
+    color:  #FFD700;
+  }
+  
