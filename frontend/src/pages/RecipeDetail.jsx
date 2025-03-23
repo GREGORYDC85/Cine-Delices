@@ -4,7 +4,7 @@ import axios from "axios";
 import "./RecipeDetail.css";
 
 function RecipeDetail() {
-  const { id } = useParams(); // Récupère l'ID depuis l'URL
+  const { id } = useParams();
   const [recipe, setRecipe] = useState(null);
 
   useEffect(() => {
@@ -19,22 +19,19 @@ function RecipeDetail() {
 
   return (
     <div className="recipe-detail">
-      {/* 📌 Titre de la recette */}
       <h1>{recipe.recipe_name}</h1>
 
-      {/* 📌 Image de la recette */}
-      <img 
-        src={`/images/${recipe.picture}`} 
-        alt={recipe.recipe_name} 
+      {/* ✅ Correction ici pour que l’image vienne du backend */}
+      <img
+        src={`${import.meta.env.VITE_API_URL}/images/${recipe.picture}`}
+        alt={recipe.recipe_name}
         className="recipe-image"
       />
 
-      {/* 📌 Informations générales */}
       <p><strong>Catégorie :</strong> {recipe.category}</p>
       <p><strong>Inspiré de :</strong> {recipe.film_serie}</p>
       <p><strong>Description :</strong> {recipe.description}</p>
 
-      {/* 📌 Ingrédients */}
       {recipe.ingredients ? (
         <div>
           <h2>🛒 Ingrédients :</h2>
@@ -48,7 +45,6 @@ function RecipeDetail() {
         <p>❌ Aucun ingrédient renseigné.</p>
       )}
 
-      {/* 📌 Instructions (si elles existent en BDD) */}
       {recipe.instruction ? (
         <div>
           <h2>👨‍🍳 Instructions :</h2>

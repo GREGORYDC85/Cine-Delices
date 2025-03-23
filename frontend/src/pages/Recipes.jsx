@@ -32,9 +32,13 @@ function Recipes() {
             {recipes.length === 0 ? <p>Aucune recette pour cette catégorie.</p> : (
               recipes.map((recipe) => (
                 <Link to={`/recipe/${recipe.code_recipe}`} key={recipe.code_recipe} className="recipe-card">
-                  <img src={`${import.meta.env.VITE_API_URL}/images/${recipe.picture}`} alt={recipe.recipe_name} />
+                  <img 
+                    src={`${import.meta.env.VITE_API_URL}/images/${recipe.picture}`} 
+                    alt={recipe.recipe_name} 
+                    className="recipe-thumbnail"
+                  />
                   <h3>{recipe.recipe_name}</h3>
-                  <p><strong>Inspiré de :</strong> {recipe.film_serie}</p>
+                  <p><strong>🎬 Inspiré de :</strong> {recipe.film_serie}</p>
                 </Link>
               ))
             )}
