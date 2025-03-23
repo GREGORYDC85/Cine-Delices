@@ -9,6 +9,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// 📌 Rendre les images du dossier public/images accessibles via /images
+app.use("/images", express.static("public/images"));
+
 // 📌 Connexion à la base de données MySQL
 const db = mysql.createConnection({
   host: process.env.DB_HOST || "localhost",
@@ -37,7 +40,6 @@ app.use("/admin", adminRoutes);
 // 📌 Middleware d'authentification
 const authenticateUser = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
-
   if (!token) {
     return res
       .status(401)
@@ -58,7 +60,6 @@ app.get("/api/profile", authenticateUser, (req, res) => {
   const userId = req.user.id;
   const sql =
     "SELECT id, first_name, last_name, email, gender, age FROM users WHERE id = ?";
-
   db.query(sql, [userId], (err, result) => {
     if (err) {
       console.error("❌ Erreur lors de la récupération du profil :", err);
@@ -75,14 +76,12 @@ app.get("/api/profile", authenticateUser, (req, res) => {
 app.put("/api/profile/update", authenticateUser, (req, res) => {
   const userId = req.user.id;
   const { first_name, last_name, gender, age } = req.body;
-
   const sql = `
     UPDATE users 
     SET first_name = ?, last_name = ?, gender = ?, age = ?
     WHERE id = ?;
   `;
-
-  db.query(sql, [first_name, last_name, gender, age, userId], (err, result) => {
+  db.query(sql, [first_name, last_name, gender, age, userId], (err) => {
     if (err) {
       console.error("❌ Erreur lors de la mise à jour du profil :", err);
       return res.status(500).json({ error: "Erreur serveur" });
