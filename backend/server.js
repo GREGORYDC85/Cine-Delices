@@ -1,6 +1,7 @@
 const express = require("express");
 const mysql = require("mysql2");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 const app = express();
@@ -19,7 +20,7 @@ const db = mysql.createConnection({
 db.connect((err) => {
   if (err) {
     console.error("❌ Erreur de connexion à MySQL:", err);
-    process.exit(1); // 🚀 Arrête le serveur si la connexion échoue
+    process.exit(1);
   }
   console.log("✅ Connecté à MySQL");
 });
@@ -33,16 +34,72 @@ app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
 app.use("/admin", adminRoutes);
 
-// 📌 Importer les middlewares
-const authenticateUser = require("./middleware/auth");
+// 📌 Middleware d'authentification
+const authenticateUser = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res
+      .status(401)
+      .json({ error: "Accès non autorisé. Aucun token fourni." });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: "Token invalide" });
+  }
+};
+
+// 📌 Route protégée : profil utilisateur
+app.get("/api/profile", authenticateUser, (req, res) => {
+  const userId = req.user.id;
+  const sql =
+    "SELECT id, first_name, last_name, email, gender, age FROM users WHERE id = ?";
+
+  db.query(sql, [userId], (err, result) => {
+    if (err) {
+      console.error("❌ Erreur lors de la récupération du profil :", err);
+      return res.status(500).json({ error: "Erreur serveur" });
+    }
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Utilisateur non trouvé" });
+    }
+    res.json(result[0]);
+  });
+});
+
+// 📌 Route pour mettre à jour le profil
+app.put("/api/profile/update", authenticateUser, (req, res) => {
+  const userId = req.user.id;
+  const { first_name, last_name, gender, age } = req.body;
+
+  const sql = `
+    UPDATE users 
+    SET first_name = ?, last_name = ?, gender = ?, age = ?
+    WHERE id = ?;
+  `;
+
+  db.query(sql, [first_name, last_name, gender, age, userId], (err, result) => {
+    if (err) {
+      console.error("❌ Erreur lors de la mise à jour du profil :", err);
+      return res.status(500).json({ error: "Erreur serveur" });
+    }
+    res.json({ message: "✅ Profil mis à jour avec succès !" });
+  });
+});
+
+// 📌 Middleware d'autorisation admin
 const authorizeAdmin = require("./middleware/admin");
 
-// 📌 Route protégée pour le tableau de bord (admin uniquement)
+// 📌 Route admin
 app.get("/admin/dashboard", authenticateUser, authorizeAdmin, (req, res) => {
   res.json({ message: "Bienvenue sur le tableau de bord Admin" });
 });
 
-// 📌 Route pour récupérer les recettes classées par catégorie
+// 📌 Route pour toutes les recettes
 app.get("/recipes", (req, res) => {
   const sql = `
     SELECT 
@@ -50,14 +107,21 @@ app.get("/recipes", (req, res) => {
       r.name AS recipe_name, 
       r.picture, 
       r.description,
-      COALESCE(c.name, 'Autre') AS category,  -- Gère les recettes sans catégorie
-      w.title AS film_serie
+      r.instruction,
+      COALESCE(c.name, 'Autre') AS category,
+      w.title AS film_serie,
+      (
+        SELECT GROUP_CONCAT(DISTINCT i.name ORDER BY i.name SEPARATOR ', ')
+        FROM contains con
+        JOIN ingredient i ON con.code_ingredient = i.code_ingredient
+        WHERE con.code_recipe = r.code_recipe
+      ) AS ingredients
     FROM recipe r
     LEFT JOIN recipe_category rc ON r.code_recipe = rc.code_recipe
     LEFT JOIN category c ON rc.code_category = c.code_category
     LEFT JOIN recipe_work rw ON r.code_recipe = rw.code_recipe
     LEFT JOIN work w ON rw.code_work = w.code_work
-    ORDER BY FIELD(c.name, 'Entrée', 'Plat', 'Dessert', 'Autre'), r.code_recipe; -- Trie dans l’ordre logique
+    ORDER BY FIELD(c.name, 'Entrée', 'Plat', 'Dessert', 'Autre'), r.code_recipe;
   `;
 
   db.query(sql, (err, result) => {
@@ -65,24 +129,30 @@ app.get("/recipes", (req, res) => {
       console.error("❌ Erreur lors de la récupération des recettes :", err);
       return res.status(500).json({ error: "Erreur serveur" });
     }
-    console.log(
-      `✅ ${result.length} recettes récupérées et triées par catégorie !`
-    );
+    console.log(`✅ ${result.length} recettes récupérées avec succès !`);
     res.json(result);
   });
 });
 
-// 📌 Route pour récupérer une recette par son ID
+// 📌 Route pour une recette spécifique
 app.get("/recipes/:id", (req, res) => {
   const recipeId = req.params.id;
+
   const sql = `
     SELECT 
       r.code_recipe, 
       r.name AS recipe_name, 
       r.picture, 
       r.description,
+      r.instruction,
       COALESCE(c.name, 'Autre') AS category, 
-      w.title AS film_serie
+      w.title AS film_serie,
+      (
+        SELECT GROUP_CONCAT(DISTINCT i.name ORDER BY i.name SEPARATOR ', ')
+        FROM contains con
+        JOIN ingredient i ON con.code_ingredient = i.code_ingredient
+        WHERE con.code_recipe = r.code_recipe
+      ) AS ingredients
     FROM recipe r
     LEFT JOIN recipe_category rc ON r.code_recipe = rc.code_recipe
     LEFT JOIN category c ON rc.code_category = c.code_category
@@ -105,12 +175,12 @@ app.get("/recipes/:id", (req, res) => {
   });
 });
 
-// 📌 Route de test pour voir si le serveur tourne
+// 📌 Test serveur
 app.get("/", (req, res) => {
   res.send("🚀 API CineDélices fonctionne !");
 });
 
-// 📌 Démarrer le serveur et gérer les erreurs de port
+// 📌 Démarrer le serveur
 const PORT = process.env.PORT || 5002;
 const server = app.listen(PORT, () => {
   console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
