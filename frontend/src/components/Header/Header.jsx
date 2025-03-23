@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import "./Header.css";
@@ -7,7 +7,9 @@ import loginIcon from "../../assets/symbole_connexion_jaune.png";
 
 function Header() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -19,7 +21,7 @@ function Header() {
         console.error("❌ Erreur de décodage du token :", error);
       }
     }
-  }, [location]); // 🔥 Recalculer user à chaque changement d'URL
+  }, [location]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -27,23 +29,44 @@ function Header() {
     window.location.href = "/login";
   };
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim() !== "") {
+      navigate(`/recipes?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery(""); // 🔄 Réinitialiser après la recherche
+    }
+  };
+
   return (
     <header className="header">
       <div className="header-container">
-        {/* ✅ Logo bien à gauche */}
+        {/* ✅ Logo + lien Accueil */}
         <div className="header-left">
           <img src={logo} alt="Ciné Délices" className="logo" />
+          <Link to="/" className="home-link">Accueil</Link>
         </div>
 
-        {/* ✅ Titre centré + Lien "Recettes" */}
+        {/* ✅ Titre + Lien Recettes + Barre de recherche */}
         <div className="header-center">
           <h1 className="site-title">🎬Ciné Délices🍿</h1>
+
           <nav className="nav-links">
             <Link to="/recipes" className="recipes-link">Recettes</Link>
           </nav>
+
+          {/* 🔍 Barre de recherche */}
+          <form onSubmit={handleSearch} className="search-bar">
+            <input
+              type="text"
+              placeholder="Rechercher une recette..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <button type="submit">🔍</button>
+          </form>
         </div>
 
-        {/* ✅ Connexion / Déconnexion à droite */}
+        {/* ✅ Connexion / Déconnexion */}
         <div className="header-right">
           {user ? (
             <>
