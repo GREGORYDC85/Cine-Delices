@@ -17,9 +17,15 @@
 }
 
 /* ✅ Partie gauche : Logo */
-.header-left {
-  display: flex;
-  align-items: center;
+.header-left a {
+  color: white;             /* ✅ Couleur blanche */
+  text-decoration: none;    /* ❌ Supprimer le soulignement */
+  font-size: 1.1em;
+  margin-left: 15px; /* ✅ Espace entre le logo et le lien */
+}
+
+.header-left a:hover {
+  color: #FFD700;           /* ✨ Jaune au survol (optionnel) */
 }
 
 .logo {

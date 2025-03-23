@@ -10,6 +10,7 @@ body {
     background-color: #121212; /* Fond noir */
     margin: 0;
     padding: 0;
+    overflow-y: auto;
 }
 
 /* ✅ Appliquer Poppins aux titres avec un poids plus élevé */
