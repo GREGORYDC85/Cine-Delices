@@ -1,4 +1,31 @@
-/* Header */
+/* ✅ Importer la police Poppins */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap");
+
+/* ✅ Appliquer Poppins à tout le site */
+body {
+    font-family: "Poppins", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: white; /* Texte en blanc */
+    background-color: #121212; /* Fond noir */
+    margin: 0;
+    padding: 0;
+}
+
+/* ✅ Appliquer Poppins aux titres avec un poids plus élevé */
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Poppins", sans-serif;
+    font-weight: 700;
+}
+
+/* ✅ Styliser les liens et boutons */
+a, button {
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+/* ✅ Header */
 .header {
     background-color: #242424; /* Noir */
     color: white;
@@ -8,59 +35,59 @@
     flex-direction: column;
     align-items: center;
     position: relative;
-  }
-  
-  .header h1 {
+}
+
+.header h1 {
     font-size: 2.5em;
     color: #FFD700; /* Jaune */
-    margin-bottom: 20px; /* Espacement sous le titre pour séparer des liens */
-  }
-  
-  /* Navigation */
-  .navbar {
+    margin-bottom: 20px;
+}
+
+/* ✅ Navigation */
+.navbar {
     display: flex;
-    flex-direction: row; /* Disposition des liens en ligne pour le menu principal */
+    flex-direction: row; /* Disposition en ligne pour le menu */
     width: 100%;
-    justify-content: center; /* Centrer les liens principaux */
-    gap: 20px; /* Espacement entre "Accueil" et "Recettes" */
+    justify-content: center;
+    gap: 20px;
     margin-top: 20px;
-  }
-  
-  /* Liens "Accueil" et "Recettes" sous le titre */
-  .navbar a {
+}
+
+/* ✅ Liens "Accueil" et "Recettes" */
+.navbar a {
     color: #FFD700; /* Jaune */
     text-decoration: none;
     font-size: 1.2em;
-  }
-  
-  .navbar a:hover {
+}
+
+.navbar a:hover {
     color: #FFCC00; /* Jaune foncé au survol */
-  }
-  
-  /* Alignement à droite pour "Connexion" et "Inscription" */
-  .right-links {
+}
+
+/* ✅ Alignement à droite pour "Connexion" et "Inscription" */
+.right-links {
     position: absolute;
     right: 20px;
-    top: 50%; /* Centre verticalement par rapport à la hauteur du header */
+    top: 50%;
     transform: translateY(-50%);
     display: flex;
     flex-direction: column;
-    gap: 10px; /* Espacement vertical */
-    align-items: flex-end; /* Aligner les éléments à droite */
-  }
-  
-  .right-links a {
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.right-links a {
     color: #FFD700; /* Jaune */
     text-decoration: none;
     font-size: 1.2em;
-  }
-  
-  .right-links a:hover {
+}
+
+.right-links a:hover {
     color: #FFCC00; /* Jaune foncé au survol */
-  }
-  
-  /* Ajout d'un effet sur le bouton de déconnexion */
-  .logout-button {
+}
+
+/* ✅ Effet sur le bouton de déconnexion */
+.logout-button {
     background-color: #FFD700;
     border: none;
     color: black;
@@ -68,9 +95,8 @@
     cursor: pointer;
     font-size: 1.2em;
     border-radius: 5px;
-  }
-  
-  .logout-button:hover {
-    background-color: #ffcc00; /* Jaune foncé */
-  }
-  
+}
+
+.logout-button:hover {
+    background-color: #FFCC00; /* Jaune foncé */
+}

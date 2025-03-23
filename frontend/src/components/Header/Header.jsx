@@ -12,10 +12,14 @@ function Header() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      const decodedUser = jwtDecode(token);
-      setUser(decodedUser);
+      try {
+        const decodedUser = jwtDecode(token);
+        setUser(decodedUser);
+      } catch (error) {
+        console.error("❌ Erreur de décodage du token :", error);
+      }
     }
-  }, []);
+  }, [location]); // 🔥 Recalculer user à chaque changement d'URL
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -31,18 +35,20 @@ function Header() {
           <img src={logo} alt="Ciné Délices" className="logo" />
         </div>
 
-        {/* ✅ Titre centré + Lien "Recettes" dessous */}
+        {/* ✅ Titre centré + Lien "Recettes" */}
         <div className="header-center">
           <h1 className="site-title">🎬Ciné Délices🍿</h1>
-          <Link to="/recipes" className="recipes-link">Recettes</Link>
+          <nav className="nav-links">
+            <Link to="/recipes" className="recipes-link">Recettes</Link>
+          </nav>
         </div>
 
-        {/* ✅ Connexion / Inscription bien à droite */}
+        {/* ✅ Connexion / Déconnexion à droite */}
         <div className="header-right">
           {user ? (
             <>
-              <Link to="/profile" className="profile-link">Profil</Link>
               <button onClick={handleLogout} className="logout">Déconnexion</button>
+              <Link to="/profile" className="profile-link">👤 Profil</Link>
             </>
           ) : (
             <div className="login-container">

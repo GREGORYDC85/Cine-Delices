@@ -28,8 +28,8 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/sitemap" element={<PlanDuSite />} />  {/* ✅ Vérifie bien ce chemin */}
-          <Route path="/legal-mentions" element={<MentionsLegales />} />  {/* ✅ Vérifie bien ce chemin */}
+          <Route path="/sitemap" element={<PlanDuSite />} />  {/* 📌 Plan du site */}
+          <Route path="/legal-mentions" element={<MentionsLegales />} />  {/* 📌 Mentions légales */}
           <Route path="/admin/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
           <Route path="*" element={<NotFound />} /> {/* Page 404 */}
         </Routes>
