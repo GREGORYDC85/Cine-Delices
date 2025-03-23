@@ -24,7 +24,7 @@ function RecipeDetail() {
 
       {/* 📌 Image de la recette */}
       <img 
-        src={`${import.meta.env.VITE_API_URL}/images/${recipe.picture}`} 
+        src={`/images/${recipe.picture}`} 
         alt={recipe.recipe_name} 
         className="recipe-image"
       />

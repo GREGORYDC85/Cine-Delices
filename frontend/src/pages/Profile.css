@@ -1,0 +1,57 @@
+.profile-container {
+  max-width: 600px;
+  margin: 40px auto;
+  text-align: center;
+  background-color: #222;
+  padding: 20px;
+  border-radius: 10px;
+  color: white;
+}
+
+.profile-form label {
+  display: block;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.profile-form input, .profile-form select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border-radius: 5px;
+  border: none;
+}
+
+.profile-form button {
+  margin-top: 20px;
+  padding: 10px;
+  color: #FFD700;
+  background-color: #11100c ;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.profile-info {
+  text-align: left;
+}
+
+.profile-info p {
+  font-size: 18px;
+}
+
+.liked-recipes {
+  margin-top: 30px;
+}
+
+.liked-recipes ul {
+  list-style: none;
+  padding: 0;
+}
+
+.liked-recipes li {
+  background: #333;
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 5px;
+}

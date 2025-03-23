@@ -6,7 +6,6 @@ const Home = () => {
     <div className="home">
       <h1>Bienvenue sur Ciné Délices</h1>
       <p>Découvrez les meilleures recettes inspirées des films et séries !</p>
-      <button>Voir les recettes</button>
     </div>
   );
 };
