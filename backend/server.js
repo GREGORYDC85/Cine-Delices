@@ -45,7 +45,6 @@ const authenticateUser = (req, res, next) => {
       .status(401)
       .json({ error: "Accès non autorisé. Aucun token fourni." });
   }
-
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
@@ -98,7 +97,7 @@ app.get("/admin/dashboard", authenticateUser, authorizeAdmin, (req, res) => {
   res.json({ message: "Bienvenue sur le tableau de bord Admin" });
 });
 
-// 📌 Route pour toutes les recettes
+// 📌 Route pour récupérer toutes les recettes avec ingrédients, instructions, etc.
 app.get("/recipes", (req, res) => {
   const sql = `
     SELECT 
@@ -110,7 +109,7 @@ app.get("/recipes", (req, res) => {
       COALESCE(c.name, 'Autre') AS category,
       w.title AS film_serie,
       (
-        SELECT GROUP_CONCAT(DISTINCT i.name ORDER BY i.name SEPARATOR ', ')
+        SELECT GROUP_CONCAT(DISTINCT CONCAT(i.name, ' (', con.quantity, ')') ORDER BY i.name SEPARATOR ', ')
         FROM contains con
         JOIN ingredient i ON con.code_ingredient = i.code_ingredient
         WHERE con.code_recipe = r.code_recipe
@@ -122,7 +121,6 @@ app.get("/recipes", (req, res) => {
     LEFT JOIN work w ON rw.code_work = w.code_work
     ORDER BY FIELD(c.name, 'Entrée', 'Plat', 'Dessert', 'Autre'), r.code_recipe;
   `;
-
   db.query(sql, (err, result) => {
     if (err) {
       console.error("❌ Erreur lors de la récupération des recettes :", err);
@@ -133,10 +131,9 @@ app.get("/recipes", (req, res) => {
   });
 });
 
-// 📌 Route pour une recette spécifique
+// 📌 Route pour une recette spécifique avec ses détails
 app.get("/recipes/:id", (req, res) => {
   const recipeId = req.params.id;
-
   const sql = `
     SELECT 
       r.code_recipe, 
@@ -144,10 +141,10 @@ app.get("/recipes/:id", (req, res) => {
       r.picture, 
       r.description,
       r.instruction,
-      COALESCE(c.name, 'Autre') AS category, 
+      COALESCE(c.name, 'Autre') AS category,
       w.title AS film_serie,
       (
-        SELECT GROUP_CONCAT(DISTINCT i.name ORDER BY i.name SEPARATOR ', ')
+        SELECT GROUP_CONCAT(DISTINCT CONCAT(i.name, ' (', con.quantity, ')') ORDER BY i.name SEPARATOR ', ')
         FROM contains con
         JOIN ingredient i ON con.code_ingredient = i.code_ingredient
         WHERE con.code_recipe = r.code_recipe
@@ -159,7 +156,6 @@ app.get("/recipes/:id", (req, res) => {
     LEFT JOIN work w ON rw.code_work = w.code_work
     WHERE r.code_recipe = ?;
   `;
-
   db.query(sql, [recipeId], (err, result) => {
     if (err) {
       console.error("❌ Erreur lors de la récupération de la recette :", err);
@@ -174,7 +170,7 @@ app.get("/recipes/:id", (req, res) => {
   });
 });
 
-// 📌 Test serveur
+// 📌 Route de test pour vérifier le serveur
 app.get("/", (req, res) => {
   res.send("🚀 API CineDélices fonctionne !");
 });
