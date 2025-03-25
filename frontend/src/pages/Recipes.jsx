@@ -19,12 +19,13 @@ function Recipes() {
       .catch((error) => console.error("❌ Erreur lors de la récupération :", error));
   }, []);
 
-  // 📌 Filtrer selon la recherche
+  // 📌 Filtrer selon la recherche (ajout de la catégorie ici)
   const filteredRecipes = recipes.filter((recipe) => {
     return (
       recipe.recipe_name.toLowerCase().includes(searchQuery) ||
       recipe.film_serie?.toLowerCase().includes(searchQuery) ||
-      recipe.ingredients?.toLowerCase().includes(searchQuery)
+      recipe.ingredients?.toLowerCase().includes(searchQuery) ||
+      recipe.category?.toLowerCase().includes(searchQuery) // ✅ Ajout ici
     );
   });
 
