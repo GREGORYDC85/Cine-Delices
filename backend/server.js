@@ -2,6 +2,7 @@ const express = require("express");
 const mysql = require("mysql2");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 require("dotenv").config();
 
 const app = express();
@@ -9,10 +10,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 📌 Rendre les images du dossier public/images accessibles via /images
+// 📌 Rendre les images accessibles
 app.use("/images", express.static("public/images"));
 
-// 📌 Connexion à la base de données MySQL
+// 📌 Connexion MySQL
 const db = mysql.createConnection({
   host: process.env.DB_HOST || "localhost",
   user: process.env.DB_USER || "root",
@@ -22,13 +23,13 @@ const db = mysql.createConnection({
 
 db.connect((err) => {
   if (err) {
-    console.error("❌ Erreur de connexion à MySQL:", err);
+    console.error("❌ Erreur connexion MySQL :", err);
     process.exit(1);
   }
   console.log("✅ Connecté à MySQL");
 });
 
-// 📌 Importer les routes
+// 📌 Routes importées
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const adminRoutes = require("./routes/admin");
@@ -37,14 +38,11 @@ app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
 app.use("/admin", adminRoutes);
 
-// 📌 Middleware d'authentification
+// 📌 Middleware JWT
 const authenticateUser = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
-  if (!token) {
-    return res
-      .status(401)
-      .json({ error: "Accès non autorisé. Aucun token fourni." });
-  }
+  if (!token) return res.status(401).json({ error: "Aucun token fourni." });
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
@@ -54,14 +52,19 @@ const authenticateUser = (req, res, next) => {
   }
 };
 
-// 📌 Route protégée : profil utilisateur
+// 📌 Récupération profil utilisateur
 app.get("/api/profile", authenticateUser, (req, res) => {
   const userId = req.user.id;
-  const sql =
-    "SELECT id, first_name, last_name, email, gender, age FROM users WHERE id = ?";
+
+  const sql = `
+    SELECT code_user AS id, name, firstname, email, pseudo, description, gender, birthdate
+    FROM site_user
+    WHERE code_user = ?;
+  `;
+
   db.query(sql, [userId], (err, result) => {
     if (err) {
-      console.error("❌ Erreur lors de la récupération du profil :", err);
+      console.error("❌ Erreur récupération profil :", err);
       return res.status(500).json({ error: "Erreur serveur" });
     }
     if (result.length === 0) {
@@ -71,25 +74,59 @@ app.get("/api/profile", authenticateUser, (req, res) => {
   });
 });
 
-// 📌 Route pour mettre à jour le profil
+// 📌 Mise à jour du profil utilisateur
 app.put("/api/profile/update", authenticateUser, (req, res) => {
   const userId = req.user.id;
-  const { first_name, last_name, gender, age } = req.body;
+  const { firstname, name, email, pseudo, description, gender, birthdate } =
+    req.body;
+
   const sql = `
-    UPDATE users 
-    SET first_name = ?, last_name = ?, gender = ?, age = ?
-    WHERE id = ?;
+    UPDATE site_user
+    SET firstname = ?, name = ?, email = ?, pseudo = ?, description = ?, gender = ?, birthdate = ?
+    WHERE code_user = ?;
   `;
-  db.query(sql, [first_name, last_name, gender, age, userId], (err) => {
-    if (err) {
-      console.error("❌ Erreur lors de la mise à jour du profil :", err);
-      return res.status(500).json({ error: "Erreur serveur" });
+
+  db.query(
+    sql,
+    [firstname, name, email, pseudo, description, gender, birthdate, userId],
+    (err) => {
+      if (err) {
+        console.error("❌ Erreur mise à jour profil :", err);
+        return res.status(500).json({ error: "Erreur serveur" });
+      }
+      res.json({ message: "✅ Profil mis à jour avec succès !" });
     }
-    res.json({ message: "✅ Profil mis à jour avec succès !" });
-  });
+  );
 });
 
-// 📌 Middleware d'autorisation admin
+// 📌 Mise à jour du mot de passe
+app.put("/api/profile/password", authenticateUser, async (req, res) => {
+  const userId = req.user.id;
+  const { newPassword } = req.body;
+
+  if (!newPassword || newPassword.length < 6) {
+    return res
+      .status(400)
+      .json({ error: "Mot de passe invalide (6 caractères min)" });
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const sql = "UPDATE site_user SET password = ? WHERE code_user = ?";
+
+    db.query(sql, [hashedPassword, userId], (err) => {
+      if (err) {
+        console.error("❌ Erreur maj mot de passe :", err);
+        return res.status(500).json({ error: "Erreur serveur" });
+      }
+      res.json({ message: "🔒 Mot de passe mis à jour." });
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Erreur hashage" });
+  }
+});
+
+// 📌 Middleware Admin
 const authorizeAdmin = require("./middleware/admin");
 
 // 📌 Route admin
@@ -97,7 +134,7 @@ app.get("/admin/dashboard", authenticateUser, authorizeAdmin, (req, res) => {
   res.json({ message: "Bienvenue sur le tableau de bord Admin" });
 });
 
-// 📌 Route pour récupérer toutes les recettes avec ingrédients, instructions, etc.
+// 📌 Récupération de toutes les recettes
 app.get("/recipes", (req, res) => {
   const sql = `
     SELECT 
@@ -121,19 +158,20 @@ app.get("/recipes", (req, res) => {
     LEFT JOIN work w ON rw.code_work = w.code_work
     ORDER BY FIELD(c.name, 'Entrée', 'Plat', 'Dessert', 'Autre'), r.code_recipe;
   `;
+
   db.query(sql, (err, result) => {
     if (err) {
-      console.error("❌ Erreur lors de la récupération des recettes :", err);
+      console.error("❌ Erreur récupération recettes :", err);
       return res.status(500).json({ error: "Erreur serveur" });
     }
-    console.log(`✅ ${result.length} recettes récupérées avec succès !`);
     res.json(result);
   });
 });
 
-// 📌 Route pour une recette spécifique avec ses détails
+// 📌 Récupération d'une recette spécifique
 app.get("/recipes/:id", (req, res) => {
   const recipeId = req.params.id;
+
   const sql = `
     SELECT 
       r.code_recipe, 
@@ -156,26 +194,25 @@ app.get("/recipes/:id", (req, res) => {
     LEFT JOIN work w ON rw.code_work = w.code_work
     WHERE r.code_recipe = ?;
   `;
+
   db.query(sql, [recipeId], (err, result) => {
     if (err) {
-      console.error("❌ Erreur lors de la récupération de la recette :", err);
+      console.error("❌ Erreur récupération recette :", err);
       return res.status(500).json({ error: "Erreur serveur" });
     }
     if (result.length === 0) {
-      console.log("⚠️ Recette non trouvée :", recipeId);
       return res.status(404).json({ error: "Recette non trouvée" });
     }
-    console.log(`✅ Recette ${recipeId} récupérée avec succès !`);
     res.json(result[0]);
   });
 });
 
-// 📌 Route de test pour vérifier le serveur
+// 📌 Route test
 app.get("/", (req, res) => {
   res.send("🚀 API CineDélices fonctionne !");
 });
 
-// 📌 Démarrer le serveur
+// 📌 Lancement du serveur
 const PORT = process.env.PORT || 5002;
 const server = app.listen(PORT, () => {
   console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
@@ -183,7 +220,7 @@ const server = app.listen(PORT, () => {
 
 server.on("error", (err) => {
   if (err.code === "EADDRINUSE") {
-    console.error(`❌ Port ${PORT} déjà utilisé. Tente de libérer le port...`);
+    console.error(`❌ Port ${PORT} déjà utilisé.`);
     process.exit(1);
   } else {
     console.error("❌ Erreur serveur :", err);

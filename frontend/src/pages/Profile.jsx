@@ -4,26 +4,29 @@ import "./Profile.css";
 
 function Profile() {
   const [user, setUser] = useState({
-    firstName: "",
-    lastName: "",
+    pseudo: "",
+    description: "",
+    firstname: "",
+    name: "",
     gender: "",
-    age: "",
+    birthdate: "",
+    email: "",
   });
 
+  const [newPassword, setNewPassword] = useState("");
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
-    // 🔍 Récupérer les infos de l'utilisateur
     const fetchUserData = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) return;
-        
+
         const response = await axios.get("http://localhost:5002/api/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        setUser(response.data);  // ✅ Met à jour l'état avec les données de l'API
+        setUser(response.data);
       } catch (error) {
         console.error("❌ Erreur lors de la récupération du profil :", error);
       }
@@ -32,24 +35,37 @@ function Profile() {
     fetchUserData();
   }, []);
 
-  // 🔥 Fonction pour sauvegarder les modifications
   const handleSave = async () => {
     try {
       const token = localStorage.getItem("token");
 
-      console.log("✅ Données envoyées :", user);  // ✅ Vérifier les données envoyées
+      // ✅ Formater la date pour MySQL (YYYY-MM-DD)
+      const formattedUser = {
+        ...user,
+        birthdate: user.birthdate ? user.birthdate.split("T")[0] : null,
+      };
 
-      const response = await axios.put("http://localhost:5002/api/profile/update", user, {
+      // 🔄 Mise à jour des infos de profil
+      await axios.put("http://localhost:5002/api/profile/update", formattedUser, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      console.log("✅ Réponse API :", response.data);  // ✅ Vérifier la réponse de l'API
+      // 🔐 Mise à jour du mot de passe s'il y a une nouvelle valeur
+      if (newPassword) {
+        await axios.put(
+          "http://localhost:5002/api/profile/password",
+          { newPassword },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        alert("🔒 Mot de passe mis à jour !");
+        setNewPassword("");
+      }
 
-      setUser(response.data);  // ✅ Met à jour l'état avec la réponse API
-      setEditing(false);  // ✅ Ferme le mode édition
       alert("✅ Profil mis à jour !");
+      setEditing(false);
     } catch (error) {
       console.error("❌ Erreur lors de la mise à jour du profil :", error);
+      alert("⚠️ Une erreur s’est produite.");
     }
   };
 
@@ -59,18 +75,31 @@ function Profile() {
 
       {editing ? (
         <div className="profile-form">
-          <label>Nom :</label>
+          <label>Pseudo :</label>
           <input
             type="text"
-            value={user.lastName}
-            onChange={(e) => setUser({ ...user, lastName: e.target.value })}
+            value={user.pseudo}
+            onChange={(e) => setUser({ ...user, pseudo: e.target.value })}
+          />
+
+          <label>Description :</label>
+          <textarea
+            value={user.description}
+            onChange={(e) => setUser({ ...user, description: e.target.value })}
           />
 
           <label>Prénom :</label>
           <input
             type="text"
-            value={user.firstName}
-            onChange={(e) => setUser({ ...user, firstName: e.target.value })}
+            value={user.firstname}
+            onChange={(e) => setUser({ ...user, firstname: e.target.value })}
+          />
+
+          <label>Nom :</label>
+          <input
+            type="text"
+            value={user.name}
+            onChange={(e) => setUser({ ...user, name: e.target.value })}
           />
 
           <label>Sexe :</label>
@@ -82,23 +111,42 @@ function Profile() {
             <option value="Homme">Homme</option>
             <option value="Femme">Femme</option>
             <option value="Autre">Autre</option>
+            <option value="Non spécifié">Non spécifié</option>
           </select>
 
-          <label>Âge :</label>
+          <label>Date de naissance :</label>
           <input
-            type="number"
-            value={user.age}
-            onChange={(e) => setUser({ ...user, age: e.target.value })}
+            type="date"
+            value={user.birthdate ? user.birthdate.slice(0, 10) : ""}
+            onChange={(e) => setUser({ ...user, birthdate: e.target.value })}
+          />
+
+          <label>Email :</label>
+          <input
+            type="email"
+            value={user.email}
+            onChange={(e) => setUser({ ...user, email: e.target.value })}
+          />
+
+          <label>Nouveau mot de passe :</label>
+          <input
+            type="password"
+            placeholder="Laisser vide si inchangé"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
           />
 
           <button onClick={handleSave}>💾 Sauvegarder</button>
         </div>
       ) : (
         <div className="profile-info">
-          <p><strong>Nom :</strong> {user.lastName}</p>
-          <p><strong>Prénom :</strong> {user.firstName}</p>
+          <p><strong>Pseudo :</strong> {user.pseudo}</p>
+          <p><strong>Description :</strong> {user.description}</p>
+          <p><strong>Prénom :</strong> {user.firstname}</p>
+          <p><strong>Nom :</strong> {user.name}</p>
           <p><strong>Sexe :</strong> {user.gender}</p>
-          <p><strong>Âge :</strong> {user.age}</p>
+          <p><strong>Date de naissance :</strong> {user.birthdate?.split("T")[0]}</p>
+          <p><strong>Email :</strong> {user.email}</p>
           <button onClick={() => setEditing(true)}>✏️ Modifier</button>
         </div>
       )}
