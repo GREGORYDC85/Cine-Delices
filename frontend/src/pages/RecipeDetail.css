@@ -64,3 +64,24 @@ ul li {
   padding: 0.5rem 1rem;
   cursor: pointer;
 }
+
+.like-section {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.like-button {
+  font-size: 1.1rem;
+  background-color: transparent;
+  border: 2px solid #e74c3c;
+  color: #e74c3c;
+  padding: 10px 20px;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.like-button:hover {
+  background-color: #e74c3c;
+  color: white;
+}
