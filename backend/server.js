@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/images", express.static("public/images"));
 
-// 📌 Connexion MySQL
+// Connexion MySQL
 const db = mysql.createConnection({
   host: process.env.DB_HOST || "localhost",
   user: process.env.DB_USER || "root",
@@ -27,7 +27,7 @@ db.connect((err) => {
   console.log("✅ Connecté à MySQL");
 });
 
-// 📌 Import des routes
+// Import des routes
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const adminRoutes = require("./routes/admin");
@@ -36,7 +36,7 @@ app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
 app.use("/admin", adminRoutes);
 
-// 📌 Middleware JWT
+// Middleware JWT
 const authenticateUser = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ error: "Aucun token fourni." });
@@ -50,7 +50,7 @@ const authenticateUser = (req, res, next) => {
   }
 };
 
-// 📌 Middleware Admin
+// Middleware Admin
 const authorizeAdmin = (req, res, next) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ error: "Accès interdit (admin uniquement)" });
@@ -58,7 +58,7 @@ const authorizeAdmin = (req, res, next) => {
   next();
 };
 
-// 📌 Récupération profil utilisateur
+// Récupération profil utilisateur
 app.get("/api/profile", authenticateUser, (req, res) => {
   const userId = req.user.id;
   const sql = `
@@ -74,7 +74,7 @@ app.get("/api/profile", authenticateUser, (req, res) => {
   });
 });
 
-// 📌 Mise à jour du profil utilisateur
+// Mise à jour du profil utilisateur
 app.put("/api/profile/update", authenticateUser, (req, res) => {
   const userId = req.user.id;
   const { firstname, name, email, pseudo, description, gender, birthdate } =
@@ -94,7 +94,7 @@ app.put("/api/profile/update", authenticateUser, (req, res) => {
   );
 });
 
-// 📌 Mise à jour du mot de passe
+// Mise à jour du mot de passe
 app.put("/api/profile/password", authenticateUser, async (req, res) => {
   const userId = req.user.id;
   const { newPassword } = req.body;
@@ -115,7 +115,7 @@ app.put("/api/profile/password", authenticateUser, async (req, res) => {
   }
 });
 
-// 📌 Récupération de toutes les recettes
+// Récupération des recettes
 app.get("/recipes", (req, res) => {
   const sql = `
     SELECT 
@@ -145,7 +145,7 @@ app.get("/recipes", (req, res) => {
   });
 });
 
-// 📌 Récupération d'une recette spécifique
+// Récupération recette spécifique
 app.get("/recipes/:id", (req, res) => {
   const recipeId = req.params.id;
   const sql = `
@@ -178,7 +178,7 @@ app.get("/recipes/:id", (req, res) => {
   });
 });
 
-// 📌 Récupération des commentaires d’une recette (incluant la date)
+// 📌 Gestion des commentaires
 app.get("/api/comments/:recipeId", (req, res) => {
   const recipeId = req.params.recipeId;
   const sql = `
@@ -194,7 +194,6 @@ app.get("/api/comments/:recipeId", (req, res) => {
   });
 });
 
-// 📌 Ajout d’un commentaire (ajoute automatiquement created_at)
 app.post("/api/comments", authenticateUser, (req, res) => {
   const { description, recipeId } = req.body;
   const userId = req.user.id;
@@ -213,15 +212,10 @@ app.post("/api/comments", authenticateUser, (req, res) => {
   });
 });
 
-// 📌 Modifier un commentaire (utilisateur uniquement)
 app.put("/api/comments/:id", authenticateUser, (req, res) => {
   const commentId = req.params.id;
   const userId = req.user.id;
   const { description } = req.body;
-
-  if (!description) {
-    return res.status(400).json({ error: "Description manquante" });
-  }
 
   const sql = `
     UPDATE comment
@@ -232,15 +226,12 @@ app.put("/api/comments/:id", authenticateUser, (req, res) => {
   db.query(sql, [description, commentId, userId], (err, result) => {
     if (err) return res.status(500).json({ error: "Erreur serveur" });
     if (result.affectedRows === 0) {
-      return res
-        .status(403)
-        .json({ error: "Non autorisé ou commentaire introuvable" });
+      return res.status(403).json({ error: "Non autorisé" });
     }
     res.json({ message: "✏️ Commentaire modifié avec succès !" });
   });
 });
 
-// 📌 Supprimer un commentaire (admin ou auteur)
 app.delete("/api/comments/:id", authenticateUser, (req, res) => {
   const commentId = req.params.id;
   const userId = req.user.id;
@@ -254,20 +245,80 @@ app.delete("/api/comments/:id", authenticateUser, (req, res) => {
   db.query(sql, [commentId, userId, userRole], (err, result) => {
     if (err) return res.status(500).json({ error: "Erreur serveur" });
     if (result.affectedRows === 0) {
-      return res
-        .status(403)
-        .json({ error: "Non autorisé ou commentaire introuvable" });
+      return res.status(403).json({ error: "Non autorisé" });
     }
     res.json({ message: "🗑️ Commentaire supprimé avec succès !" });
   });
 });
 
-// 📌 Route test
+// 📌 Gestion des likes
+app.post("/api/likes", authenticateUser, (req, res) => {
+  const userId = req.user.id;
+  const { recipeId } = req.body;
+  if (!recipeId) return res.status(400).json({ error: "ID recette manquant" });
+
+  const sql = `
+    INSERT IGNORE INTO liked_recipe (code_user, code_recipe)
+    VALUES (?, ?);
+  `;
+  db.query(sql, [userId, recipeId], (err) => {
+    if (err) return res.status(500).json({ error: "Erreur serveur" });
+    res.json({ message: "❤️ Recette likée !" });
+  });
+});
+
+app.delete("/api/likes", authenticateUser, (req, res) => {
+  const userId = req.user.id;
+  const { recipeId } = req.body;
+  if (!recipeId) return res.status(400).json({ error: "ID recette manquant" });
+
+  const sql = `
+    DELETE FROM liked_recipe
+    WHERE code_user = ? AND code_recipe = ?;
+  `;
+  db.query(sql, [userId, recipeId], (err) => {
+    if (err) return res.status(500).json({ error: "Erreur serveur" });
+    res.json({ message: "💔 Recette délikée." });
+  });
+});
+
+app.get("/api/likes/:recipeId", authenticateUser, (req, res) => {
+  const userId = req.user.id;
+  const recipeId = req.params.recipeId;
+
+  const sql = `
+    SELECT * FROM liked_recipe
+    WHERE code_user = ? AND code_recipe = ?;
+  `;
+
+  db.query(sql, [userId, recipeId], (err, results) => {
+    if (err) return res.status(500).json({ error: "Erreur serveur" });
+    res.json({ liked: results.length > 0 });
+  });
+});
+
+app.get("/api/likes", authenticateUser, (req, res) => {
+  const userId = req.user.id;
+
+  const sql = `
+    SELECT r.code_recipe, r.name AS recipe_name, r.picture, r.description
+    FROM liked_recipe l
+    JOIN recipe r ON l.code_recipe = r.code_recipe
+    WHERE l.code_user = ?;
+  `;
+
+  db.query(sql, [userId], (err, results) => {
+    if (err) return res.status(500).json({ error: "Erreur serveur" });
+    res.json(results);
+  });
+});
+
+// Route test
 app.get("/", (req, res) => {
   res.send("🚀 API CineDélices fonctionne !");
 });
 
-// 📌 Lancement du serveur
+// Lancement serveur
 const PORT = process.env.PORT || 5002;
 const server = app.listen(PORT, () => {
   console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
