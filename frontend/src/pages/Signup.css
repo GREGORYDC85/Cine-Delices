@@ -1,52 +1,97 @@
-.signup-container {
-    display: flex;
-    justify-content: center; /* Centre horizontalement */
-    align-items: center; /* Centre verticalement */
-    height: 100vh; /* Prend toute la hauteur de la fenêtre */
-  }
-  
-  .form-box {
-    background-color: #222; /* Fond sombre */
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-    text-align: center;
-    width: 350px; /* Taille du formulaire */
-  }
-  
-  .form-box h1 {
-    color:  #FFD700;
-    margin-bottom: 20px;
-  }
-  
-  .form-box label {
-    display: block;
-    color: white;
-    margin-bottom: 8px;
-    font-size: 1rem;
-  }
-  
-  .form-box input {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border: none;
-    border-radius: 5px;
-    font-size: 1rem;
-  }
-  
-  .form-box button {
-    width: 100%;
-    background-color:  #FFD700;
-    color: black;
-    font-size: 1.2rem;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .form-box button:hover {
-    background-color: orange;
-  }
-  
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "./Signup.css";
+
+function Signup() {
+  const [formData, setFormData] = useState({
+    firstname: "",
+    name: "",
+    email: "",
+    password: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      await axios.post(`${API_URL}/auth/register`, formData);
+
+      toast.success("🎉 Inscription réussie ! Vous pouvez vous connecter.");
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
+    } catch (err) {
+      toast.error("❌ Erreur lors de l'inscription.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="signup-container">
+      <div className="form-box">
+        <h1>Inscription 📝</h1>
+        <form onSubmit={handleSubmit}>
+          <label>Prénom</label>
+          <input
+            type="text"
+            name="firstname"
+            value={formData.firstname}
+            onChange={handleChange}
+            required
+          />
+
+          <label>Nom</label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
+
+          <label>Email</label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+
+          <label>Mot de passe</label>
+          <input
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+
+          <button type="submit" disabled={loading}>
+            {loading ? "Inscription..." : "S'inscrire"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export default Signup;
