@@ -3,15 +3,16 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import "./RecipeDetail.css";
 import CommentSection from "../components/CommentSection/CommentSection";
-import { jwtDecode } from "jwt-decode"; // ✅ Pour décoder le token
+import { jwtDecode } from "jwt-decode";
 
 function RecipeDetail() {
   const { id } = useParams();
   const [recipe, setRecipe] = useState(null);
   const [user, setUser] = useState(null);
+  const [liked, setLiked] = useState(false);
 
   useEffect(() => {
-    // 🔄 Charger les détails de la recette
+    // 🔄 Charger la recette
     axios
       .get(`${import.meta.env.VITE_API_URL}/recipes/${id}`)
       .then((response) => setRecipe(response.data))
@@ -19,17 +20,51 @@ function RecipeDetail() {
         console.error("❌ Erreur lors de la récupération de la recette :", error)
       );
 
-    // 👤 Décodage du token pour récupérer les infos de l'utilisateur
+    // 👤 Décoder le token utilisateur
     const token = localStorage.getItem("token");
     if (token) {
       try {
         const decoded = jwtDecode(token);
         setUser(decoded);
+
+        // ✅ Vérifie si la recette est déjà likée
+        axios
+          .get(`${import.meta.env.VITE_API_URL}/api/likes/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          .then((res) => {
+            setLiked(res.data.liked);
+          })
+          .catch((err) => console.error("❌ Erreur like check :", err));
       } catch (error) {
         console.error("❌ Erreur lors du décodage du token :", error);
       }
     }
   }, [id]);
+
+  const handleToggleLike = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      if (liked) {
+        await axios.delete(`${import.meta.env.VITE_API_URL}/api/likes`, {
+          headers: { Authorization: `Bearer ${token}` },
+          data: { recipeId: id }, // ✅ N'oublie pas "data" pour DELETE
+        });
+        setLiked(false);
+      } else {
+        await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/likes`,
+          { recipeId: id },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setLiked(true);
+      }
+    } catch (error) {
+      console.error("❌ Erreur lors du like :", error);
+    }
+  };
 
   if (!recipe) return <p>Chargement...</p>;
 
@@ -69,7 +104,16 @@ function RecipeDetail() {
         <p>❌ Aucune instruction disponible.</p>
       )}
 
-      {/* 💬 Section des commentaires */}
+      {/* ❤️ Bouton "Ajouter aux favoris" */}
+      {user && (
+        <div className="like-section">
+          <button className="like-button" onClick={handleToggleLike}>
+            {liked ? "❤️ Retirer des favoris" : "🤍 Ajouter aux favoris"}
+          </button>
+        </div>
+      )}
+
+      {/* 💬 Commentaires */}
       <CommentSection recipeId={recipe.code_recipe} user={user} />
     </div>
   );

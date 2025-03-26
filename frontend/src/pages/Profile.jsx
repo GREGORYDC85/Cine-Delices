@@ -15,42 +15,51 @@ function Profile() {
 
   const [newPassword, setNewPassword] = useState("");
   const [editing, setEditing] = useState(false);
+  const [likedRecipes, setLikedRecipes] = useState([]);
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
     const fetchUserData = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
         const response = await axios.get("http://localhost:5002/api/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
-
         setUser(response.data);
       } catch (error) {
         console.error("❌ Erreur lors de la récupération du profil :", error);
       }
     };
 
+    const fetchLikedRecipes = async () => {
+      try {
+        const response = await axios.get("http://localhost:5002/api/likes", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setLikedRecipes(response.data);
+      } catch (error) {
+        console.error("❌ Erreur lors de la récupération des recettes likées :", error);
+      }
+    };
+
     fetchUserData();
+    fetchLikedRecipes();
   }, []);
 
   const handleSave = async () => {
     try {
       const token = localStorage.getItem("token");
 
-      // ✅ Formater la date pour MySQL (YYYY-MM-DD)
       const formattedUser = {
         ...user,
         birthdate: user.birthdate ? user.birthdate.split("T")[0] : null,
       };
 
-      // 🔄 Mise à jour des infos de profil
       await axios.put("http://localhost:5002/api/profile/update", formattedUser, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // 🔐 Mise à jour du mot de passe s'il y a une nouvelle valeur
       if (newPassword) {
         await axios.put(
           "http://localhost:5002/api/profile/password",
@@ -66,6 +75,19 @@ function Profile() {
     } catch (error) {
       console.error("❌ Erreur lors de la mise à jour du profil :", error);
       alert("⚠️ Une erreur s’est produite.");
+    }
+  };
+
+  const handleUnlike = async (recipeId) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete("http://localhost:5002/api/likes", {
+        data: { recipeId },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setLikedRecipes((prev) => prev.filter((r) => r.code_recipe !== recipeId));
+    } catch (error) {
+      console.error("❌ Erreur lors du retrait du like :", error);
     }
   };
 
@@ -148,6 +170,29 @@ function Profile() {
           <p><strong>Date de naissance :</strong> {user.birthdate?.split("T")[0]}</p>
           <p><strong>Email :</strong> {user.email}</p>
           <button onClick={() => setEditing(true)}>✏️ Modifier</button>
+        </div>
+      )}
+
+      {/* ❤️ Recettes likées */}
+      {likedRecipes.length > 0 && (
+        <div className="liked-recipes">
+          <h3>💖 Recettes que j’ai likées</h3>
+          <ul>
+            {likedRecipes.map((recipe) => (
+              <li key={recipe.code_recipe}>
+                <img
+                  src={`http://localhost:5002/images/${recipe.picture}`}
+                  alt={recipe.recipe_name}
+                  width="100"
+                />
+                <div>
+                  <p><strong>{recipe.recipe_name}</strong></p>
+                  <p>{recipe.description}</p>
+                  <button onClick={() => handleUnlike(recipe.code_recipe)}>❌ Retirer</button>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
