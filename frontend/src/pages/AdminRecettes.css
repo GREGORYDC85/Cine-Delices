@@ -1,0 +1,41 @@
+.admin-recettes-container {
+    padding: 2rem;
+    color: white;
+  }
+  
+  .admin-recette-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  
+  .admin-recette-table th,
+  .admin-recette-table td {
+    border: 1px solid #444;
+    padding: 10px;
+    text-align: left;
+  }
+  
+  .admin-recette-table th {
+    background-color: #FFD700;
+    color: black;
+  }
+  
+  .edit-btn {
+    background-color: #FFCC00;
+    border: none;
+    padding: 5px 10px;
+    margin-right: 5px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  
+  .delete-btn {
+    background-color: #cc0000;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  

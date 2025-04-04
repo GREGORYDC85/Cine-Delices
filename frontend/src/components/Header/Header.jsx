@@ -66,12 +66,17 @@ function Header() {
           </form>
         </div>
 
-        {/* ✅ Connexion / Déconnexion */}
+        {/* ✅ Connexion / Déconnexion + Lien Dashboard admin */}
         <div className="header-right">
           {user ? (
             <>
               <button onClick={handleLogout} className="logout">Déconnexion</button>
               <Link to="/profile" className="profile-link">👤 Profil</Link>
+
+              {/* ✅ Lien visible uniquement si admin */}
+              {user.role === "admin" && (
+                <Link to="/admin/dashboard" className="dashboard-link">⚙️ Dashboard</Link>
+              )}
             </>
           ) : (
             <div className="login-container">

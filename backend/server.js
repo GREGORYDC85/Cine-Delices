@@ -7,11 +7,12 @@ require("dotenv").config();
 
 const app = express();
 
+// 🔗 Middleware globaux
 app.use(cors());
 app.use(express.json());
 app.use("/images", express.static("public/images"));
 
-// Connexion MySQL
+// 🔌 Connexion MySQL
 const db = mysql.createConnection({
   host: process.env.DB_HOST || "localhost",
   user: process.env.DB_USER || "root",
@@ -27,16 +28,7 @@ db.connect((err) => {
   console.log("✅ Connecté à MySQL");
 });
 
-// Import des routes
-const authRoutes = require("./routes/auth");
-const userRoutes = require("./routes/user");
-const adminRoutes = require("./routes/admin");
-
-app.use("/auth", authRoutes);
-app.use("/user", userRoutes);
-app.use("/admin", adminRoutes);
-
-// Middleware JWT
+// 🔐 Middleware d'authentification
 const authenticateUser = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ error: "Aucun token fourni." });
@@ -50,7 +42,7 @@ const authenticateUser = (req, res, next) => {
   }
 };
 
-// Middleware Admin
+// 🔐 Middleware pour restreindre aux admins
 const authorizeAdmin = (req, res, next) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ error: "Accès interdit (admin uniquement)" });
@@ -58,64 +50,101 @@ const authorizeAdmin = (req, res, next) => {
   next();
 };
 
-// Récupération profil utilisateur
-app.get("/api/profile", authenticateUser, (req, res) => {
-  const userId = req.user.id;
-  const sql = `
-    SELECT code_user AS id, name, firstname, email, pseudo, description, gender, birthdate
-    FROM site_user
-    WHERE code_user = ?;
-  `;
-  db.query(sql, [userId], (err, result) => {
-    if (err) return res.status(500).json({ error: "Erreur serveur" });
-    if (result.length === 0)
-      return res.status(404).json({ error: "Utilisateur non trouvé" });
-    res.json(result[0]);
-  });
-});
+// ✅ Import des routes
+const authRoutes = require("./routes/auth");
+const adminRoutes = require("./routes/admin");
+const likeRoutes = require("./routes/likes");
 
-// Mise à jour du profil utilisateur
-app.put("/api/profile/update", authenticateUser, (req, res) => {
-  const userId = req.user.id;
-  const { firstname, name, email, pseudo, description, gender, birthdate } =
-    req.body;
-  const sql = `
-    UPDATE site_user
-    SET firstname = ?, name = ?, email = ?, pseudo = ?, description = ?, gender = ?, birthdate = ?
-    WHERE code_user = ?;
-  `;
+// 📦 Montage des routes
+app.use("/auth", authRoutes);
+app.use("/admin", adminRoutes); // admin.js contient toutes les routes sécurisées
+app.use("/api/likes", likeRoutes);
+
+// ✅ Route profil utilisateur connecté
+app.get("/api/profile", authenticateUser, (req, res) => {
+  const userId = req.user.code_user;
+
   db.query(
-    sql,
-    [firstname, name, email, pseudo, description, gender, birthdate, userId],
-    (err) => {
-      if (err) return res.status(500).json({ error: "Erreur serveur" });
-      res.json({ message: "✅ Profil mis à jour avec succès !" });
+    "SELECT pseudo, email, firstname, name, gender, birthdate, description FROM site_user WHERE code_user = ?",
+    [userId],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: "Erreur serveur." });
+      if (result.length === 0)
+        return res.status(404).json({ error: "Utilisateur non trouvé." });
+      res.json(result[0]);
     }
   );
 });
 
-// Mise à jour du mot de passe
+// ✅ Mise à jour des infos du profil
+app.put("/api/profile/update", authenticateUser, (req, res) => {
+  const userId = req.user.code_user;
+  const { pseudo, email, firstname, name, gender, birthdate, description } =
+    req.body;
+
+  db.query(
+    `UPDATE site_user 
+     SET pseudo = ?, email = ?, firstname = ?, name = ?, gender = ?, birthdate = ?, description = ?
+     WHERE code_user = ?`,
+    [pseudo, email, firstname, name, gender, birthdate, description, userId],
+    (err) => {
+      if (err) return res.status(500).json({ error: "Erreur MAJ profil" });
+      res.json({ message: "✅ Profil mis à jour." });
+    }
+  );
+});
+
+// 🔐 Changement de mot de passe
 app.put("/api/profile/password", authenticateUser, async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user.code_user;
   const { newPassword } = req.body;
-  if (!newPassword || newPassword.length < 6) {
-    return res
-      .status(400)
-      .json({ error: "Mot de passe invalide (6 caractères min)" });
+
+  if (!newPassword) {
+    return res.status(400).json({ error: "Mot de passe requis." });
   }
+
   try {
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    const sql = "UPDATE site_user SET password = ? WHERE code_user = ?";
-    db.query(sql, [hashedPassword, userId], (err) => {
-      if (err) return res.status(500).json({ error: "Erreur serveur" });
-      res.json({ message: "🔒 Mot de passe mis à jour." });
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Erreur hashage" });
+    const hashed = await bcrypt.hash(newPassword, 10);
+    db.query(
+      "UPDATE site_user SET password = ? WHERE code_user = ?",
+      [hashed, userId],
+      (err) => {
+        if (err)
+          return res.status(500).json({ error: "Erreur MAJ mot de passe" });
+        res.json({ message: "🔐 Mot de passe mis à jour." });
+      }
+    );
+  } catch (err) {
+    console.error("❌ Erreur hash mot de passe :", err);
+    res.status(500).json({ error: "Erreur serveur." });
   }
 });
 
-// Récupération des recettes
+// ✅ Récupérer les recettes likées par l'utilisateur
+app.get("/api/likes", authenticateUser, (req, res) => {
+  const userId = req.user.code_user;
+
+  const sql = `
+    SELECT 
+      r.code_recipe, 
+      r.name AS recipe_name, 
+      r.picture, 
+      r.description
+    FROM liked_recipe l
+    JOIN recipe r ON l.code_recipe = r.code_recipe
+    WHERE l.code_user = ?
+  `;
+
+  db.query(sql, [userId], (err, results) => {
+    if (err) {
+      console.error("❌ Erreur récupération recettes likées :", err);
+      return res.status(500).json({ error: "Erreur serveur." });
+    }
+    res.json(results);
+  });
+});
+
+// ✅ Liste publique des recettes
 app.get("/recipes", (req, res) => {
   const sql = `
     SELECT 
@@ -124,6 +153,7 @@ app.get("/recipes", (req, res) => {
       r.picture, 
       r.description,
       r.instruction,
+      rc.code_category,                        
       COALESCE(c.name, 'Autre') AS category,
       w.title AS film_serie,
       (
@@ -145,9 +175,10 @@ app.get("/recipes", (req, res) => {
   });
 });
 
-// Récupération recette spécifique
+// ✅ Détail d'une recette
 app.get("/recipes/:id", (req, res) => {
   const recipeId = req.params.id;
+
   const sql = `
     SELECT 
       r.code_recipe, 
@@ -155,6 +186,7 @@ app.get("/recipes/:id", (req, res) => {
       r.picture, 
       r.description,
       r.instruction,
+      rc.code_category,                        
       COALESCE(c.name, 'Autre') AS category,
       w.title AS film_serie,
       (
@@ -170,6 +202,7 @@ app.get("/recipes/:id", (req, res) => {
     LEFT JOIN work w ON rw.code_work = w.code_work
     WHERE r.code_recipe = ?;
   `;
+
   db.query(sql, [recipeId], (err, result) => {
     if (err) return res.status(500).json({ error: "Erreur serveur" });
     if (result.length === 0)
@@ -178,147 +211,12 @@ app.get("/recipes/:id", (req, res) => {
   });
 });
 
-// 📌 Gestion des commentaires
-app.get("/api/comments/:recipeId", (req, res) => {
-  const recipeId = req.params.recipeId;
-  const sql = `
-    SELECT c.code_comment, c.description, c.code_user, c.code_recipe, c.created_at, u.pseudo
-    FROM comment c
-    LEFT JOIN site_user u ON c.code_user = u.code_user
-    WHERE c.code_recipe = ?
-    ORDER BY c.code_comment DESC;
-  `;
-  db.query(sql, [recipeId], (err, results) => {
-    if (err) return res.status(500).json({ error: "Erreur serveur" });
-    res.json(results);
-  });
-});
-
-app.post("/api/comments", authenticateUser, (req, res) => {
-  const { description, recipeId } = req.body;
-  const userId = req.user.id;
-  if (!description || !recipeId) {
-    return res.status(400).json({ error: "Champs manquants" });
-  }
-
-  const sql = `
-    INSERT INTO comment (description, code_user, code_recipe)
-    VALUES (?, ?, ?);
-  `;
-
-  db.query(sql, [description, userId, recipeId], (err) => {
-    if (err) return res.status(500).json({ error: "Erreur serveur" });
-    res.json({ message: "✅ Commentaire ajouté avec succès !" });
-  });
-});
-
-app.put("/api/comments/:id", authenticateUser, (req, res) => {
-  const commentId = req.params.id;
-  const userId = req.user.id;
-  const { description } = req.body;
-
-  const sql = `
-    UPDATE comment
-    SET description = ?
-    WHERE code_comment = ? AND code_user = ?;
-  `;
-
-  db.query(sql, [description, commentId, userId], (err, result) => {
-    if (err) return res.status(500).json({ error: "Erreur serveur" });
-    if (result.affectedRows === 0) {
-      return res.status(403).json({ error: "Non autorisé" });
-    }
-    res.json({ message: "✏️ Commentaire modifié avec succès !" });
-  });
-});
-
-app.delete("/api/comments/:id", authenticateUser, (req, res) => {
-  const commentId = req.params.id;
-  const userId = req.user.id;
-  const userRole = req.user.role;
-
-  const sql = `
-    DELETE FROM comment
-    WHERE code_comment = ? AND (code_user = ? OR ? = 'admin');
-  `;
-
-  db.query(sql, [commentId, userId, userRole], (err, result) => {
-    if (err) return res.status(500).json({ error: "Erreur serveur" });
-    if (result.affectedRows === 0) {
-      return res.status(403).json({ error: "Non autorisé" });
-    }
-    res.json({ message: "🗑️ Commentaire supprimé avec succès !" });
-  });
-});
-
-// 📌 Gestion des likes
-app.post("/api/likes", authenticateUser, (req, res) => {
-  const userId = req.user.id;
-  const { recipeId } = req.body;
-  if (!recipeId) return res.status(400).json({ error: "ID recette manquant" });
-
-  const sql = `
-    INSERT IGNORE INTO liked_recipe (code_user, code_recipe)
-    VALUES (?, ?);
-  `;
-  db.query(sql, [userId, recipeId], (err) => {
-    if (err) return res.status(500).json({ error: "Erreur serveur" });
-    res.json({ message: "❤️ Recette likée !" });
-  });
-});
-
-app.delete("/api/likes", authenticateUser, (req, res) => {
-  const userId = req.user.id;
-  const { recipeId } = req.body;
-  if (!recipeId) return res.status(400).json({ error: "ID recette manquant" });
-
-  const sql = `
-    DELETE FROM liked_recipe
-    WHERE code_user = ? AND code_recipe = ?;
-  `;
-  db.query(sql, [userId, recipeId], (err) => {
-    if (err) return res.status(500).json({ error: "Erreur serveur" });
-    res.json({ message: "💔 Recette délikée." });
-  });
-});
-
-app.get("/api/likes/:recipeId", authenticateUser, (req, res) => {
-  const userId = req.user.id;
-  const recipeId = req.params.recipeId;
-
-  const sql = `
-    SELECT * FROM liked_recipe
-    WHERE code_user = ? AND code_recipe = ?;
-  `;
-
-  db.query(sql, [userId, recipeId], (err, results) => {
-    if (err) return res.status(500).json({ error: "Erreur serveur" });
-    res.json({ liked: results.length > 0 });
-  });
-});
-
-app.get("/api/likes", authenticateUser, (req, res) => {
-  const userId = req.user.id;
-
-  const sql = `
-    SELECT r.code_recipe, r.name AS recipe_name, r.picture, r.description
-    FROM liked_recipe l
-    JOIN recipe r ON l.code_recipe = r.code_recipe
-    WHERE l.code_user = ?;
-  `;
-
-  db.query(sql, [userId], (err, results) => {
-    if (err) return res.status(500).json({ error: "Erreur serveur" });
-    res.json(results);
-  });
-});
-
-// Route test
+// 🧪 Route test
 app.get("/", (req, res) => {
   res.send("🚀 API CineDélices fonctionne !");
 });
 
-// Lancement serveur
+// 🚀 Lancer le serveur
 const PORT = process.env.PORT || 5002;
 const server = app.listen(PORT, () => {
   console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import "./Dashboard.css"; // si tu veux un style dédié
 
 function Dashboard() {
   const [message, setMessage] = useState("");
@@ -32,9 +33,18 @@ function Dashboard() {
   }, []);
 
   return (
-    <div>
-      <h1>Dashboard Admin</h1>
+    <div className="dashboard-container">
+      <h1>🎛️ Tableau de bord Admin</h1>
       <p>{message}</p>
+
+      <div className="admin-links">
+        <h2>Gérer le contenu du site :</h2>
+        <ul>
+          <li><Link to="/admin/recettes">📖 Recettes</Link></li>
+          <li><Link to="/admin/utilisateurs">👥 Utilisateurs</Link></li>
+          <li><Link to="/admin/commentaires">💬 Commentaires</Link></li>
+        </ul>
+      </div>
     </div>
   );
 }

@@ -1,0 +1,25 @@
+/* Dashboard admin */
+.dashboard-container {
+    padding: 2rem;
+    color: white;
+  }
+  
+  .admin-links ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .admin-links li {
+    margin-bottom: 10px;
+  }
+  
+  .admin-links a {
+    color: #FFD700;
+    font-weight: bold;
+    text-decoration: none;
+  }
+  
+  .admin-links a:hover {
+    text-decoration: underline;
+  }
+  

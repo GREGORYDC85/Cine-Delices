@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import "./CommentSection.css";
 
@@ -7,10 +7,13 @@ function CommentSection({ recipeId, user }) {
   const [newComment, setNewComment] = useState("");
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editedText, setEditedText] = useState("");
-  const token = localStorage.getItem("token");
+  const [loading, setLoading] = useState(true);
 
-  // 📥 Récupérer les commentaires
+  const token = localStorage.getItem("token");
+  const commentsEndRef = useRef(null);
+
   const fetchComments = async () => {
+    setLoading(true);
     try {
       const response = await axios.get(
         `http://localhost:5002/api/comments/${recipeId}`
@@ -18,6 +21,8 @@ function CommentSection({ recipeId, user }) {
       setComments(response.data);
     } catch (error) {
       console.error("❌ Erreur lors du chargement des commentaires :", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -25,7 +30,12 @@ function CommentSection({ recipeId, user }) {
     fetchComments();
   }, [recipeId]);
 
-  // ➕ Ajouter un commentaire
+  useEffect(() => {
+    if (commentsEndRef.current) {
+      commentsEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [comments]);
+
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     try {
@@ -41,8 +51,8 @@ function CommentSection({ recipeId, user }) {
     }
   };
 
-  // ✏️ Modifier un commentaire
   const handleEdit = async (id) => {
+    if (!editedText.trim()) return;
     try {
       await axios.put(
         `http://localhost:5002/api/comments/${id}`,
@@ -57,7 +67,6 @@ function CommentSection({ recipeId, user }) {
     }
   };
 
-  // 🗑️ Supprimer un commentaire
   const handleDelete = async (id) => {
     try {
       await axios.delete(`http://localhost:5002/api/comments/${id}`, {
@@ -69,7 +78,6 @@ function CommentSection({ recipeId, user }) {
     }
   };
 
-  // 📅 Formater la date affichée
   const formatDate = (isoString) => {
     const date = new Date(isoString);
     return date.toLocaleString("fr-FR", {
@@ -83,9 +91,8 @@ function CommentSection({ recipeId, user }) {
 
   return (
     <div className="comment-section">
-      <h3>💬 Commentaires</h3>
+      <h3>💬 Commentaires ({comments.length})</h3>
 
-      {/* Formulaire d’ajout */}
       {user && (
         <div className="comment-form">
           <textarea
@@ -97,8 +104,9 @@ function CommentSection({ recipeId, user }) {
         </div>
       )}
 
-      {/* Liste des commentaires */}
-      {comments.length === 0 ? (
+      {loading ? (
+        <p>⏳ Chargement des commentaires...</p>
+      ) : comments.length === 0 ? (
         <p>Aucun commentaire pour l’instant.</p>
       ) : (
         <ul className="comment-list">
@@ -150,6 +158,7 @@ function CommentSection({ recipeId, user }) {
                 )}
             </li>
           ))}
+          <div ref={commentsEndRef} />
         </ul>
       )}
     </div>
