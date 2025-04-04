@@ -62,7 +62,7 @@ app.use("/api/likes", likeRoutes);
 
 // ✅ Route profil utilisateur connecté
 app.get("/api/profile", authenticateUser, (req, res) => {
-  const userId = req.user.code_user;
+  const userId = req.user.id;
 
   db.query(
     "SELECT pseudo, email, firstname, name, gender, birthdate, description FROM site_user WHERE code_user = ?",
@@ -78,7 +78,7 @@ app.get("/api/profile", authenticateUser, (req, res) => {
 
 // ✅ Mise à jour des infos du profil
 app.put("/api/profile/update", authenticateUser, (req, res) => {
-  const userId = req.user.code_user;
+  const userId = req.user.id;
   const { pseudo, email, firstname, name, gender, birthdate, description } =
     req.body;
 
@@ -96,7 +96,7 @@ app.put("/api/profile/update", authenticateUser, (req, res) => {
 
 // 🔐 Changement de mot de passe
 app.put("/api/profile/password", authenticateUser, async (req, res) => {
-  const userId = req.user.code_user;
+  const userId = req.user.id;
   const { newPassword } = req.body;
 
   if (!newPassword) {
@@ -122,7 +122,7 @@ app.put("/api/profile/password", authenticateUser, async (req, res) => {
 
 // ✅ Récupérer les recettes likées
 app.get("/api/likes", authenticateUser, (req, res) => {
-  const userId = req.user.code_user;
+  const userId = req.user.id;
 
   const sql = `
     SELECT 
