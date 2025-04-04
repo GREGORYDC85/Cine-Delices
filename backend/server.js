@@ -54,11 +54,13 @@ const authorizeAdmin = (req, res, next) => {
 const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
 const likeRoutes = require("./routes/likes");
+const commentRoutes = require("./routes/comments");
 
 // 📦 Montage des routes
 app.use("/auth", authRoutes);
 app.use("/admin", adminRoutes);
 app.use("/api/likes", likeRoutes);
+app.use("/api/comments", commentRoutes);
 
 // ✅ Route profil utilisateur connecté
 app.get("/api/profile", authenticateUser, (req, res) => {
