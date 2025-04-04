@@ -57,7 +57,7 @@ const likeRoutes = require("./routes/likes");
 
 // 📦 Montage des routes
 app.use("/auth", authRoutes);
-app.use("/admin", adminRoutes); // admin.js contient toutes les routes sécurisées
+app.use("/admin", adminRoutes);
 app.use("/api/likes", likeRoutes);
 
 // ✅ Route profil utilisateur connecté
@@ -120,7 +120,7 @@ app.put("/api/profile/password", authenticateUser, async (req, res) => {
   }
 });
 
-// ✅ Récupérer les recettes likées par l'utilisateur
+// ✅ Récupérer les recettes likées
 app.get("/api/likes", authenticateUser, (req, res) => {
   const userId = req.user.code_user;
 
@@ -167,11 +167,62 @@ app.get("/recipes", (req, res) => {
     LEFT JOIN category c ON rc.code_category = c.code_category
     LEFT JOIN recipe_work rw ON r.code_recipe = rw.code_recipe
     LEFT JOIN work w ON rw.code_work = w.code_work
-    ORDER BY FIELD(c.name, 'Entrée', 'Plat', 'Dessert', 'Autre'), r.code_recipe;
+    ORDER BY FIELD(category, 'Entrée', 'Plat', 'Dessert', 'Autre'), r.code_recipe;
   `;
+
   db.query(sql, (err, result) => {
     if (err) return res.status(500).json({ error: "Erreur serveur" });
     res.json(result);
+  });
+});
+
+// 🔍 Recherche de recettes (corrigée)
+app.get("/recipes/search", (req, res) => {
+  const search = `%${req.query.q.toLowerCase()}%`;
+
+  const sql = `
+    SELECT DISTINCT 
+      r.code_recipe,
+      r.name AS recipe_name,
+      r.picture,
+      r.description,
+      r.instruction,
+      rc.code_category,
+      COALESCE(c.name, 'Autre') AS category,
+      COALESCE(w.title, '') AS film_serie,
+      (
+        SELECT GROUP_CONCAT(DISTINCT CONCAT(i.name, ' (', con.quantity, ')') ORDER BY i.name SEPARATOR ', ')
+        FROM contains con
+        JOIN ingredient i ON con.code_ingredient = i.code_ingredient
+        WHERE con.code_recipe = r.code_recipe
+      ) AS ingredients
+    FROM recipe r
+    LEFT JOIN recipe_category rc ON r.code_recipe = rc.code_recipe
+    LEFT JOIN category c ON rc.code_category = c.code_category
+    LEFT JOIN recipe_work rw ON r.code_recipe = rw.code_recipe
+    LEFT JOIN work w ON rw.code_work = w.code_work
+    LEFT JOIN contains ctn ON r.code_recipe = ctn.code_recipe
+    LEFT JOIN ingredient ing ON ctn.code_ingredient = ing.code_ingredient
+    WHERE 
+      LOWER(r.name) LIKE ? OR 
+      LOWER(r.description) LIKE ? OR 
+      LOWER(w.title) LIKE ? OR
+      LOWER(ing.name) LIKE ?
+    ORDER BY FIELD(category, 'Entrée', 'Plat', 'Dessert', 'Autre'), r.code_recipe;
+  `;
+
+  db.query(sql, [search, search, search, search], (err, results) => {
+    if (err) {
+      console.error("❌ Erreur recherche :", err);
+      return res.status(500).json({ error: "Erreur lors de la recherche." });
+    }
+
+    const fixedResults = results.map((recipe) => ({
+      ...recipe,
+      code_category: recipe.code_category || 0,
+    }));
+
+    res.json(fixedResults);
   });
 });
 
