@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import axios from "axios";
 import "./Profile.css";
 
@@ -17,40 +18,43 @@ function Profile() {
   const [editing, setEditing] = useState(false);
   const [likedRecipes, setLikedRecipes] = useState([]);
 
+  const token = localStorage.getItem("token");
+
   useEffect(() => {
-    const token = localStorage.getItem("token");
     if (!token) return;
 
     const fetchUserData = async () => {
       try {
-        const response = await axios.get("http://localhost:5002/api/profile", {
+        console.log("Token utilisé pour récupérer les données :", token); // Vérifie que le token est bien récupéré
+        const res = await axios.get("http://localhost:5002/api/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setUser(response.data);
+        console.log("Données utilisateur récupérées :", res.data); // Affiche les données utilisateur
+        setUser(res.data);
       } catch (error) {
-        console.error("❌ Erreur lors de la récupération du profil :", error);
+        console.error("❌ Erreur récupération profil :", error);
       }
     };
 
     const fetchLikedRecipes = async () => {
       try {
-        const response = await axios.get("http://localhost:5002/api/likes", {
+        console.log("Récupération des recettes likées avec le token :", token); // Vérifie que le token est bien récupéré
+        const res = await axios.get("http://localhost:5002/api/likes", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setLikedRecipes(response.data);
+        console.log("Recettes likées récupérées :", res.data); // Affiche les recettes likées récupérées
+        setLikedRecipes(res.data);
       } catch (error) {
-        console.error("❌ Erreur lors de la récupération des recettes likées :", error);
+        console.error("❌ Erreur récupération recettes likées :", error);
       }
     };
 
     fetchUserData();
     fetchLikedRecipes();
-  }, []);
+  }, [token]);
 
   const handleSave = async () => {
     try {
-      const token = localStorage.getItem("token");
-
       const formattedUser = {
         ...user,
         birthdate: user.birthdate ? user.birthdate.split("T")[0] : null,
@@ -73,21 +77,22 @@ function Profile() {
       alert("✅ Profil mis à jour !");
       setEditing(false);
     } catch (error) {
-      console.error("❌ Erreur lors de la mise à jour du profil :", error);
+      console.error("❌ Erreur mise à jour profil :", error);
       alert("⚠️ Une erreur s’est produite.");
     }
   };
 
   const handleUnlike = async (recipeId) => {
     try {
-      const token = localStorage.getItem("token");
+      console.log("Suppression du like pour la recette ID :", recipeId); // Affiche l'ID de la recette à supprimer des favoris
       await axios.delete("http://localhost:5002/api/likes", {
         data: { recipeId },
         headers: { Authorization: `Bearer ${token}` },
       });
+
       setLikedRecipes((prev) => prev.filter((r) => r.code_recipe !== recipeId));
     } catch (error) {
-      console.error("❌ Erreur lors du retrait du like :", error);
+      console.error("❌ Erreur suppression like :", error);
     }
   };
 
@@ -173,23 +178,24 @@ function Profile() {
         </div>
       )}
 
-      {/* ❤️ Recettes likées */}
       {likedRecipes.length > 0 && (
         <div className="liked-recipes">
           <h3>💖 Recettes que j’ai likées</h3>
           <ul>
             {likedRecipes.map((recipe) => (
               <li key={recipe.code_recipe}>
-                <img
-                  src={`http://localhost:5002/images/${recipe.picture}`}
-                  alt={recipe.recipe_name}
-                  width="100"
-                />
-                <div>
-                  <p><strong>{recipe.recipe_name}</strong></p>
-                  <p>{recipe.description}</p>
-                  <button onClick={() => handleUnlike(recipe.code_recipe)}>❌ Retirer</button>
-                </div>
+                <Link to={`/recettes/${recipe.code_recipe}`} className="liked-recipe-link">
+                  <img
+                    src={`http://localhost:5002/images/${recipe.picture}`}
+                    alt={recipe.recipe_name}
+                    width="100"
+                  />
+                  <div>
+                    <p><strong>{recipe.recipe_name}</strong></p>
+                    <p>{recipe.description}</p>
+                  </div>
+                </Link>
+                <button onClick={() => handleUnlike(recipe.code_recipe)}>❌ Retirer</button>
               </li>
             ))}
           </ul>

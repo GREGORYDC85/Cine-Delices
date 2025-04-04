@@ -9,11 +9,17 @@ import Signup from "./pages/Signup";
 import Contact from "./pages/Contact";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
-import PlanDuSite from "./pages/PlanDuSite";  // ✅ Assure-toi que c'est bien le bon fichier
-import MentionsLegales from "./pages/MentionsLegales";  // ✅ Assure-toi que c'est bien le bon fichier
+import PlanDuSite from "./pages/PlanDuSite";
+import MentionsLegales from "./pages/MentionsLegales";
 import PrivateRoute from "./components/PrivateRoute";
 import NotFound from "./components/NotFound";
 import "./styles/global.css";
+
+// ✅ Pages admin
+import AdminRecettes from "./pages/AdminRecettes";
+import AdminUtilisateurs from "./pages/AdminUtilisateurs";
+import AdminCommentaires from "./pages/AdminCommentaires";
+import AdminWorks from "./pages/AdminWorks"; // 🆕 Import de la nouvelle page
 
 function App() {
   return (
@@ -23,15 +29,24 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/recipes" element={<Recipes />} />
-          <Route path="/recipe/:id" element={<RecipeDetail />} />
+          <Route path="/recettes/:id" element={<RecipeDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/sitemap" element={<PlanDuSite />} />  {/* 📌 Plan du site */}
-          <Route path="/legal-mentions" element={<MentionsLegales />} />  {/* 📌 Mentions légales */}
+          <Route path="/sitemap" element={<PlanDuSite />} />
+          <Route path="/legal-mentions" element={<MentionsLegales />} />
+
+          {/* ✅ Dashboard admin protégé */}
           <Route path="/admin/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
-          <Route path="*" element={<NotFound />} /> {/* Page 404 */}
+
+          {/* ✅ Routes admin supplémentaires */}
+          <Route path="/admin/recettes" element={<PrivateRoute element={<AdminRecettes />} />} />
+          <Route path="/admin/utilisateurs" element={<PrivateRoute element={<AdminUtilisateurs />} />} />
+          <Route path="/admin/commentaires" element={<PrivateRoute element={<AdminCommentaires />} />} />
+          <Route path="/admin/works" element={<PrivateRoute element={<AdminWorks />} />} /> {/* 🆕 Nouvelle route */}
+
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
       <Footer />

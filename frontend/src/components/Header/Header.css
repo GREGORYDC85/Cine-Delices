@@ -132,3 +132,17 @@
 .logout:hover {
   text-decoration: underline;
 }
+
+/* ✅ Lien vers le dashboard admin */
+.dashboard-link {
+  color: #FFD700; /* Jaune */
+  font-weight: bold;
+  text-decoration: none;
+  margin-top: 10px;
+  display: inline-block;
+}
+
+.dashboard-link:hover {
+  color: #FFCC00; /* Jaune foncé au survol */
+  text-decoration: underline;
+}
