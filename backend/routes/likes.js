@@ -6,7 +6,7 @@ const router = express.Router();
 
 // ✅ Vérifier si l'utilisateur a liké une recette
 router.get("/:id", authenticateUser, (req, res) => {
-  const userId = req.user.code_user;
+  const userId = req.user.id;
   const recipeId = req.params.id;
 
   const query = `
@@ -25,7 +25,7 @@ router.get("/:id", authenticateUser, (req, res) => {
 
 // ✅ Ajouter un like
 router.post("/", authenticateUser, (req, res) => {
-  const userId = req.user.code_user;
+  const userId = req.user.id;
   const { recipeId } = req.body;
 
   if (!recipeId) {
@@ -48,7 +48,7 @@ router.post("/", authenticateUser, (req, res) => {
 
 // ✅ Supprimer un like
 router.delete("/", authenticateUser, (req, res) => {
-  const userId = req.user.code_user;
+  const userId = req.user.id;
   const { recipeId } = req.body;
 
   if (!recipeId) {
