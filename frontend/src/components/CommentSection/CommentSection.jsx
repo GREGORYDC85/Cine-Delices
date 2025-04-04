@@ -12,6 +12,7 @@ function CommentSection({ recipeId, user }) {
   const token = localStorage.getItem("token");
   const commentsEndRef = useRef(null);
 
+  // 🔄 Charger les commentaires
   const fetchComments = async () => {
     setLoading(true);
     try {
@@ -36,6 +37,7 @@ function CommentSection({ recipeId, user }) {
     }
   }, [comments]);
 
+  // ➕ Ajouter un commentaire
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     try {
@@ -51,6 +53,7 @@ function CommentSection({ recipeId, user }) {
     }
   };
 
+  // ✏️ Modifier un commentaire
   const handleEdit = async (id) => {
     if (!editedText.trim()) return;
     try {
@@ -67,6 +70,7 @@ function CommentSection({ recipeId, user }) {
     }
   };
 
+  // 🗑️ Supprimer un commentaire
   const handleDelete = async (id) => {
     try {
       await axios.delete(`http://localhost:5002/api/comments/${id}`, {
@@ -78,6 +82,7 @@ function CommentSection({ recipeId, user }) {
     }
   };
 
+  // 📅 Format date lisible
   const formatDate = (isoString) => {
     const date = new Date(isoString);
     return date.toLocaleString("fr-FR", {
