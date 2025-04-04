@@ -1,126 +1,71 @@
 const express = require("express");
-const db = require("../config/db");
+const db = require("../config/db"); // Utilise la version avec .promise()
 const authenticateUser = require("../middleware/auth");
 const authorizeAdmin = require("../middleware/admin");
 
 const router = express.Router();
 
-///////////////////////////////
-// ✅ DASHBOARD ADMIN
-///////////////////////////////
-router.get("/dashboard", authenticateUser, authorizeAdmin, (req, res) => {
+// 🔐 Middleware pour sécuriser toutes les routes ci-dessous
+router.use(authenticateUser, authorizeAdmin);
+
+// 🧪 Dashboard admin
+router.get("/dashboard", (req, res) => {
   res.json({ message: "Bienvenue sur le dashboard admin", admin: req.user });
 });
 
-///////////////////////////////
-// ✅ GESTION DES ŒUVRES
-///////////////////////////////
-
-// 🔍 Liste des œuvres
-router.get("/works", authenticateUser, authorizeAdmin, (req, res) => {
-  db.query(
-    "SELECT code_work, title FROM work ORDER BY title",
-    (err, results) => {
-      if (err) {
-        console.error("❌ Erreur récupération œuvres :", err);
-        return res.status(500).json({ message: "Erreur serveur." });
-      }
-      res.json(results);
-    }
-  );
+// 📚 Liste des œuvres
+router.get("/works", async (req, res) => {
+  try {
+    const connection = await db.promise();
+    const [works] = await connection.query(
+      "SELECT code_work, title FROM work ORDER BY title"
+    );
+    res.json(works);
+  } catch (err) {
+    console.error("❌ Erreur récupération œuvres :", err);
+    res.status(500).json({ message: "Erreur serveur." });
+  }
 });
 
-// ➕ Ajouter une œuvre
-router.post("/works", authenticateUser, authorizeAdmin, (req, res) => {
+// 🆕 Ajouter une œuvre
+router.post("/works", async (req, res) => {
   const { title } = req.body;
   if (!title || title.trim() === "") {
     return res.status(400).json({ message: "Le titre est requis." });
   }
 
-  const sql = "INSERT INTO work (title) VALUES (?)";
-  db.query(sql, [title.trim()], (err) => {
-    if (err) {
-      console.error("❌ Erreur ajout œuvre :", err);
-      return res.status(500).json({ message: "Erreur serveur." });
-    }
+  try {
+    const connection = await db.promise();
+    await connection.query("INSERT INTO work (title) VALUES (?)", [
+      title.trim(),
+    ]);
     res.status(201).json({ message: "✅ Œuvre ajoutée avec succès !" });
-  });
-});
-
-// ✏️ Modifier une œuvre
-router.put("/works/:id", authenticateUser, authorizeAdmin, (req, res) => {
-  const workId = req.params.id;
-  const { title } = req.body;
-
-  if (!title || title.trim() === "") {
-    return res.status(400).json({ message: "Titre requis." });
+  } catch (err) {
+    console.error("❌ Erreur ajout œuvre :", err);
+    res.status(500).json({ message: "Erreur serveur." });
   }
-
-  const sql = "UPDATE work SET title = ? WHERE code_work = ?";
-  db.query(sql, [title.trim(), workId], (err) => {
-    if (err) {
-      console.error("❌ Erreur modification œuvre :", err);
-      return res.status(500).json({ message: "Erreur serveur." });
-    }
-    res.json({ message: "✅ Œuvre mise à jour." });
-  });
 });
 
-// 🗑️ Supprimer une œuvre
-router.delete("/works/:id", authenticateUser, authorizeAdmin, (req, res) => {
-  const workId = req.params.id;
-
-  db.query("DELETE FROM work WHERE code_work = ?", [workId], (err, result) => {
-    if (err) {
-      console.error("❌ Erreur suppression œuvre :", err);
-      return res.status(500).json({ message: "Erreur serveur." });
-    }
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Œuvre introuvable." });
-    }
-
-    res.json({ message: "🗑️ Œuvre supprimée avec succès." });
-  });
+// 🔍 Récupérer toutes les recettes
+router.get("/recettes", async (req, res) => {
+  try {
+    const connection = await db.promise();
+    const [recipes] = await connection.query(`
+      SELECT 
+        r.code_recipe, r.name, r.author, r.code_category, r.total_time, r.servings, 
+        r.picture, r.description, r.instruction, rw.code_work
+      FROM recipe r
+      LEFT JOIN recipe_work rw ON r.code_recipe = rw.code_recipe
+    `);
+    res.json(recipes);
+  } catch (err) {
+    console.error("❌ Erreur récupération recettes :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
 
-///////////////////////////////
-// ✅ GESTION DES RECETTES (ADMIN)
-///////////////////////////////
-
-// 🔍 Récupérer toutes les recettes (correction : JOIN avec category et work)
-router.get("/recettes", authenticateUser, authorizeAdmin, (req, res) => {
-  const sql = `
-    SELECT 
-      r.code_recipe,
-      r.name,
-      r.author,
-      r.total_time,
-      r.servings,
-      r.picture,
-      r.description,
-      r.instruction,
-      rc.code_category,
-      rw.code_work
-    FROM recipe r
-    LEFT JOIN recipe_category rc ON r.code_recipe = rc.code_recipe
-    LEFT JOIN recipe_work rw ON r.code_recipe = rw.code_recipe
-  `;
-  db.query(sql, (err, results) => {
-    if (err) {
-      console.error("❌ Erreur récupération recettes :", err);
-      return res
-        .status(500)
-        .json({
-          error: "Erreur serveur lors de la récupération des recettes.",
-        });
-    }
-    res.json(results);
-  });
-});
-
-// ➕ Ajouter une recette (avec ingrédients)
-router.post("/recettes", authenticateUser, authorizeAdmin, (req, res) => {
+// ➕ Ajouter une recette
+router.post("/recettes", async (req, res) => {
   const {
     name,
     picture,
@@ -131,80 +76,82 @@ router.post("/recettes", authenticateUser, authorizeAdmin, (req, res) => {
     instruction,
     code_category,
     code_work,
+    new_work_title,
     ingredients = [],
   } = req.body;
 
-  const sql = `
-    INSERT INTO recipe (name, picture, total_time, servings, author, description, instruction)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `;
-  db.query(
-    sql,
-    [name, picture, total_time, servings, author, description, instruction],
-    (err, result) => {
-      if (err) {
-        console.error("❌ Erreur ajout recette :", err);
-        return res.status(500).json({ error: "Erreur ajout recette." });
-      }
+  try {
+    const connection = await db.promise();
 
-      const recipeId = result.insertId;
-
-      // Lier à la catégorie
-      db.query(
-        `INSERT INTO recipe_category (code_recipe, code_category) VALUES (?, ?)`,
-        [recipeId, code_category]
+    // 💡 Si un titre d'œuvre est fourni, l'insérer et récupérer son ID
+    let finalWorkId = code_work;
+    if (!finalWorkId && new_work_title?.trim()) {
+      const [result] = await connection.query(
+        "INSERT INTO work (title) VALUES (?)",
+        [new_work_title.trim()]
       );
+      finalWorkId = result.insertId;
+    }
 
-      // Lier à l’œuvre
-      if (code_work) {
-        db.query(
-          `INSERT INTO recipe_work (code_recipe, code_work) VALUES (?, ?)`,
-          [recipeId, code_work]
+    const [recipeResult] = await connection.query(
+      `
+      INSERT INTO recipe (name, picture, total_time, servings, author, description, instruction)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `,
+      [name, picture, total_time, servings, author, description, instruction]
+    );
+
+    const recipeId = recipeResult.insertId;
+
+    // ➕ Lier à la catégorie
+    await connection.query(
+      "INSERT INTO recipe_category (code_recipe, code_category) VALUES (?, ?)",
+      [recipeId, code_category]
+    );
+
+    // ➕ Lier à l'œuvre si présente
+    if (finalWorkId) {
+      await connection.query(
+        "INSERT INTO recipe_work (code_recipe, code_work) VALUES (?, ?)",
+        [recipeId, finalWorkId]
+      );
+    }
+
+    // ➕ Ingrédients
+    for (const { name: ingredientName, quantity } of ingredients) {
+      if (!ingredientName?.trim()) continue;
+
+      const [existing] = await connection.query(
+        "SELECT code_ingredient FROM ingredient WHERE name = ?",
+        [ingredientName.trim()]
+      );
+      let ingredientId;
+
+      if (existing.length > 0) {
+        ingredientId = existing[0].code_ingredient;
+      } else {
+        const [inserted] = await connection.query(
+          "INSERT INTO ingredient (name) VALUES (?)",
+          [ingredientName.trim()]
         );
+        ingredientId = inserted.insertId;
       }
 
-      // Lier les ingrédients
-      ingredients.forEach(({ name, quantity }) => {
-        if (!name.trim()) return;
-
-        db.query(
-          "SELECT code_ingredient FROM ingredient WHERE name = ?",
-          [name.trim()],
-          (err, result) => {
-            if (err) return;
-
-            const insertContains = (ingredientId) => {
-              db.query(
-                `INSERT INTO contains (code_recipe, code_ingredient, quantity) VALUES (?, ?, ?)`,
-                [recipeId, ingredientId, quantity]
-              );
-            };
-
-            if (result.length > 0) {
-              insertContains(result[0].code_ingredient);
-            } else {
-              db.query(
-                "INSERT INTO ingredient (name) VALUES (?)",
-                [name.trim()],
-                (err, result) => {
-                  if (err) return;
-                  insertContains(result.insertId);
-                }
-              );
-            }
-          }
-        );
-      });
-
-      res
-        .status(201)
-        .json({ message: "✅ Recette + ingrédients ajoutés avec succès !" });
+      await connection.query(
+        "INSERT INTO contains (code_recipe, code_ingredient, quantity) VALUES (?, ?, ?)",
+        [recipeId, ingredientId, quantity]
+      );
     }
-  );
+
+    res.status(201).json({ message: "✅ Recette ajoutée avec succès !" });
+  } catch (err) {
+    console.error("❌ Erreur ajout recette :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
 
-// ✏️ Modifier une recette (avec ingrédients)
-router.put("/recettes/:id", authenticateUser, authorizeAdmin, (req, res) => {
+// ✏️ Modifier une recette
+router.put("/recettes/:id", async (req, res) => {
   const recipeId = req.params.id;
   const {
     name,
@@ -216,108 +163,110 @@ router.put("/recettes/:id", authenticateUser, authorizeAdmin, (req, res) => {
     instruction,
     code_category,
     code_work,
+    new_work_title,
     ingredients = [],
   } = req.body;
 
-  const sql = `
-    UPDATE recipe
-    SET name = ?, picture = ?, total_time = ?, servings = ?, author = ?, description = ?, instruction = ?
-    WHERE code_recipe = ?
-  `;
-  db.query(
-    sql,
-    [
-      name,
-      picture,
-      total_time,
-      servings,
-      author,
-      description,
-      instruction,
+  try {
+    const connection = await db.promise();
+
+    // 🔄 Mise à jour recette
+    await connection.query(
+      `
+      UPDATE recipe SET name = ?, picture = ?, total_time = ?, servings = ?, author = ?, 
+      description = ?, instruction = ? WHERE code_recipe = ?
+    `,
+      [
+        name,
+        picture,
+        total_time,
+        servings,
+        author,
+        description,
+        instruction,
+        recipeId,
+      ]
+    );
+
+    // 🔄 Catégorie
+    await connection.query(
+      "REPLACE INTO recipe_category (code_recipe, code_category) VALUES (?, ?)",
+      [recipeId, code_category]
+    );
+
+    // 🔄 Œuvre
+    let finalWorkId = code_work;
+    if (!finalWorkId && new_work_title?.trim()) {
+      const [result] = await connection.query(
+        "INSERT INTO work (title) VALUES (?)",
+        [new_work_title.trim()]
+      );
+      finalWorkId = result.insertId;
+    }
+    if (finalWorkId) {
+      await connection.query(
+        "REPLACE INTO recipe_work (code_recipe, code_work) VALUES (?, ?)",
+        [recipeId, finalWorkId]
+      );
+    }
+
+    // 🔄 Ingrédients
+    await connection.query("DELETE FROM contains WHERE code_recipe = ?", [
       recipeId,
-    ],
-    (err) => {
-      if (err) {
-        console.error("❌ Erreur modification recette :", err);
-        return res.status(500).json({ error: "Erreur serveur." });
+    ]);
+
+    for (const { name: ingredientName, quantity } of ingredients) {
+      if (!ingredientName?.trim()) continue;
+
+      const [existing] = await connection.query(
+        "SELECT code_ingredient FROM ingredient WHERE name = ?",
+        [ingredientName.trim()]
+      );
+      let ingredientId;
+
+      if (existing.length > 0) {
+        ingredientId = existing[0].code_ingredient;
+      } else {
+        const [inserted] = await connection.query(
+          "INSERT INTO ingredient (name) VALUES (?)",
+          [ingredientName.trim()]
+        );
+        ingredientId = inserted.insertId;
       }
 
-      db.query(
-        `REPLACE INTO recipe_category (code_recipe, code_category) VALUES (?, ?)`,
-        [recipeId, code_category]
+      await connection.query(
+        "INSERT INTO contains (code_recipe, code_ingredient, quantity) VALUES (?, ?, ?)",
+        [recipeId, ingredientId, quantity]
       );
-      db.query(
-        `REPLACE INTO recipe_work (code_recipe, code_work) VALUES (?, ?)`,
-        [recipeId, code_work]
-      );
-
-      // Supprimer les anciens ingrédients
-      db.query(
-        "DELETE FROM contains WHERE code_recipe = ?",
-        [recipeId],
-        (err) => {
-          if (err) return;
-
-          // Réinsertion des nouveaux
-          ingredients.forEach(({ name, quantity }) => {
-            if (!name.trim()) return;
-
-            db.query(
-              "SELECT code_ingredient FROM ingredient WHERE name = ?",
-              [name.trim()],
-              (err, result) => {
-                if (err) return;
-
-                const insertContains = (ingredientId) => {
-                  db.query(
-                    `INSERT INTO contains (code_recipe, code_ingredient, quantity) VALUES (?, ?, ?)`,
-                    [recipeId, ingredientId, quantity]
-                  );
-                };
-
-                if (result.length > 0) {
-                  insertContains(result[0].code_ingredient);
-                } else {
-                  db.query(
-                    "INSERT INTO ingredient (name) VALUES (?)",
-                    [name.trim()],
-                    (err, result) => {
-                      if (err) return;
-                      insertContains(result.insertId);
-                    }
-                  );
-                }
-              }
-            );
-          });
-        }
-      );
-
-      res.json({ message: "✅ Recette mise à jour avec ingrédients." });
     }
-  );
+
+    res.json({ message: "✅ Recette mise à jour avec succès." });
+  } catch (err) {
+    console.error("❌ Erreur modification recette :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
 
 // 🗑️ Supprimer une recette
-router.delete("/recettes/:id", authenticateUser, authorizeAdmin, (req, res) => {
+router.delete("/recettes/:id", async (req, res) => {
   const recipeId = req.params.id;
 
-  db.query(
-    "DELETE FROM recipe WHERE code_recipe = ?",
-    [recipeId],
-    (err, result) => {
-      if (err) {
-        console.error("❌ Erreur suppression recette :", err);
-        return res.status(500).json({ error: "Erreur serveur." });
-      }
+  try {
+    const connection = await db.promise();
+    const [result] = await connection.query(
+      "DELETE FROM recipe WHERE code_recipe = ?",
+      [recipeId]
+    );
 
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: "Recette introuvable." });
-      }
-
-      res.json({ message: "🗑️ Recette supprimée avec succès." });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Recette introuvable." });
     }
-  );
+
+    res.json({ message: "🗑️ Recette supprimée avec succès." });
+  } catch (err) {
+    console.error("❌ Erreur suppression recette :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
 
 module.exports = router;

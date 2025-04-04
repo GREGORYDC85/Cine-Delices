@@ -32,7 +32,9 @@ function AdminRecettes() {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setRecipes(res.data))
-      .catch((err) => console.error("❌ Erreur récupération des recettes :", err));
+      .catch((err) =>
+        console.error("❌ Erreur récupération des recettes :", err)
+      );
   };
 
   const fetchWorks = () => {
@@ -41,7 +43,9 @@ function AdminRecettes() {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setWorks(res.data))
-      .catch((err) => console.error("❌ Erreur récupération des œuvres :", err));
+      .catch((err) =>
+        console.error("❌ Erreur récupération des œuvres :", err)
+      );
   };
 
   const handleInputChange = (e) => {
@@ -83,10 +87,27 @@ function AdminRecettes() {
 
   const handleAddOrUpdate = (e) => {
     e.preventDefault();
-    const url = `${import.meta.env.VITE_API_URL}/admin/recettes` + (editingId ? `/${editingId}` : "");
+
+    const cleanedIngredients = ingredients
+      .filter((ing) => ing.name.trim() && ing.quantity.trim())
+      .map((ing) => ({
+        name: ing.name.trim(),
+        quantity: ing.quantity.trim(),
+      }));
+
+    const cleanedData = {
+      ...newRecipe,
+      code_work: newRecipe.code_work || null,
+      new_work_title: newRecipe.new_work_title?.trim() || null,
+      ingredients: cleanedIngredients,
+    };
+
+    const url =
+      `${import.meta.env.VITE_API_URL}/admin/recettes` +
+      (editingId ? `/${editingId}` : "");
     const method = editingId ? "put" : "post";
 
-    axios[method](url, { ...newRecipe, ingredients }, {
+    axios[method](url, cleanedData, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(() => {
@@ -94,7 +115,10 @@ function AdminRecettes() {
         resetForm();
       })
       .catch((err) =>
-        console.error(`❌ Erreur lors de l'${editingId ? "édition" : "ajout"} :`, err)
+        console.error(
+          `❌ Erreur lors de l'${editingId ? "édition" : "ajout"} :`,
+          err
+        )
       );
   };
 
@@ -124,7 +148,9 @@ function AdminRecettes() {
     });
 
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/recipes/${recipe.code_recipe}`);
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/recipes/${recipe.code_recipe}`
+      );
       if (res.data.ingredients) {
         const parsed = res.data.ingredients.split(", ").map((item) => {
           const [name, qty] = item.split(" (");
@@ -150,45 +176,128 @@ function AdminRecettes() {
       <form className="add-recipe-form" onSubmit={handleAddOrUpdate}>
         <h2>{editingId ? "✏️ Modifier la recette" : "➕ Ajouter une recette"}</h2>
 
-        <input name="name" value={newRecipe.name} onChange={handleInputChange} placeholder="Nom de la recette" required />
-        <input name="picture" value={newRecipe.picture} onChange={handleInputChange} placeholder="Image (nom_fichier.jpg)" required />
-        <input name="total_time" value={newRecipe.total_time} onChange={handleInputChange} placeholder="Temps total (min)" type="number" />
-        <input name="servings" value={newRecipe.servings} onChange={handleInputChange} placeholder="Portions" type="number" />
-        <input name="author" value={newRecipe.author} onChange={handleInputChange} placeholder="Auteur" />
-        <textarea name="description" value={newRecipe.description} onChange={handleInputChange} placeholder="Description" />
-        <textarea name="instruction" value={newRecipe.instruction} onChange={handleInputChange} placeholder="Instructions" />
+        <input
+          name="name"
+          value={newRecipe.name}
+          onChange={handleInputChange}
+          placeholder="Nom de la recette"
+          required
+        />
+        <input
+          name="picture"
+          value={newRecipe.picture}
+          onChange={handleInputChange}
+          placeholder="Image (nom_fichier.jpg)"
+          required
+        />
+        <input
+          name="total_time"
+          value={newRecipe.total_time}
+          onChange={handleInputChange}
+          placeholder="Temps total (min)"
+          type="number"
+        />
+        <input
+          name="servings"
+          value={newRecipe.servings}
+          onChange={handleInputChange}
+          placeholder="Portions"
+          type="number"
+        />
+        <input
+          name="author"
+          value={newRecipe.author}
+          onChange={handleInputChange}
+          placeholder="Auteur"
+        />
+        <textarea
+          name="description"
+          value={newRecipe.description}
+          onChange={handleInputChange}
+          placeholder="Description"
+        />
+        <textarea
+          name="instruction"
+          value={newRecipe.instruction}
+          onChange={handleInputChange}
+          placeholder="Instructions"
+        />
 
-        <select name="code_category" value={newRecipe.code_category} onChange={handleInputChange} required>
+        <select
+          name="code_category"
+          value={newRecipe.code_category}
+          onChange={handleInputChange}
+          required
+        >
           <option value="">-- Catégorie --</option>
           <option value="1">Entrée</option>
           <option value="2">Plat</option>
           <option value="3">Dessert</option>
         </select>
 
-        <select name="code_work" value={newRecipe.code_work} onChange={handleInputChange}>
+        <select
+          name="code_work"
+          value={newRecipe.code_work}
+          onChange={handleInputChange}
+        >
           <option value="">-- Œuvre existante --</option>
           {works.map((w) => (
-            <option key={w.code_work} value={w.code_work}>{w.title}</option>
+            <option key={w.code_work} value={w.code_work}>
+              {w.title}
+            </option>
           ))}
         </select>
-        <input name="new_work_title" value={newRecipe.new_work_title} onChange={handleInputChange} placeholder="Ou ajouter une nouvelle œuvre..." />
+
+        <input
+          name="new_work_title"
+          value={newRecipe.new_work_title}
+          onChange={handleInputChange}
+          placeholder="Ou ajouter une nouvelle œuvre..."
+        />
 
         <h3>🧂 Ingrédients</h3>
         {ingredients.map((ing, index) => (
           <div key={index} className="ingredient-row">
-            <input type="text" placeholder="Nom" value={ing.name} onChange={(e) => handleIngredientChange(index, "name", e.target.value)} required />
-            <input type="text" placeholder="Quantité" value={ing.quantity} onChange={(e) => handleIngredientChange(index, "quantity", e.target.value)} required />
+            <input
+              type="text"
+              placeholder="Nom"
+              value={ing.name}
+              onChange={(e) =>
+                handleIngredientChange(index, "name", e.target.value)
+              }
+              required
+            />
+            <input
+              type="text"
+              placeholder="Quantité"
+              value={ing.quantity}
+              onChange={(e) =>
+                handleIngredientChange(index, "quantity", e.target.value)
+              }
+              required
+            />
             {ingredients.length > 1 && (
-              <button type="button" onClick={() => removeIngredientField(index)}>❌</button>
+              <button
+                type="button"
+                onClick={() => removeIngredientField(index)}
+              >
+                ❌
+              </button>
             )}
           </div>
         ))}
-        <button type="button" onClick={addIngredientField}>➕ Ajouter un ingrédient</button>
+        <button type="button" onClick={addIngredientField}>
+          ➕ Ajouter un ingrédient
+        </button>
 
         <button type="submit" className="add-btn">
           {editingId ? "✅ Mettre à jour" : "✅ Ajouter"}
         </button>
-        {editingId && <button type="button" className="cancel-btn" onClick={resetForm}>❌ Annuler</button>}
+        {editingId && (
+          <button type="button" className="cancel-btn" onClick={resetForm}>
+            ❌ Annuler
+          </button>
+        )}
       </form>
 
       <hr />
@@ -214,8 +323,18 @@ function AdminRecettes() {
                 <td>{recipe.code_category}</td>
                 <td>{recipe.author}</td>
                 <td>
-                  <button className="edit-btn" onClick={() => handleEditClick(recipe)}>✏️ Modifier</button>
-                  <button className="delete-btn" onClick={() => handleDelete(recipe.code_recipe)}>🗑️ Supprimer</button>
+                  <button
+                    className="edit-btn"
+                    onClick={() => handleEditClick(recipe)}
+                  >
+                    ✏️ Modifier
+                  </button>
+                  <button
+                    className="delete-btn"
+                    onClick={() => handleDelete(recipe.code_recipe)}
+                  >
+                    🗑️ Supprimer
+                  </button>
                 </td>
               </tr>
             ))}

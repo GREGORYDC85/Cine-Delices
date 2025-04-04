@@ -7,47 +7,54 @@ function Recipes() {
   const [recipes, setRecipes] = useState([]);
   const location = useLocation();
 
-  const searchParams = new URLSearchParams(location.search);
-  const searchQuery = searchParams.get("search")?.toLowerCase() || "";
-
   const categoryMap = {
     1: "Entrée",
     2: "Plat",
     3: "Dessert",
+    0: "Autre",
+    null: "Autre", // cas inattendus
   };
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const searchQuery = searchParams.get("search")?.toLowerCase() || "";
+
+    const endpoint = searchQuery
+      ? `/recipes/search?q=${encodeURIComponent(searchQuery)}`
+      : "/recipes";
+
+    console.log("📡 Appel à :", endpoint);
+
     axios
-      .get(`${import.meta.env.VITE_API_URL}/recipes`)
-      .then((response) => setRecipes(response.data))
-      .catch((error) =>
-        console.error("❌ Erreur lors de la récupération :", error)
-      );
-  }, []);
+      .get(`${import.meta.env.VITE_API_URL}${endpoint}`)
+      .then((response) => {
+        console.log("✅ Données reçues :", response.data);
+        setRecipes(response.data);
+      })
+      .catch((error) => {
+        console.error("❌ Erreur lors de la récupération :", error);
+      });
+  }, [location.search]);
 
-  const mappedRecipes = recipes
-    .filter((recipe) => recipe.code_category)
-    .map((recipe) => ({
+  // 🔁 Mapping des catégories
+  const mappedRecipes = recipes.map((recipe) => {
+    const categoryName =
+      recipe.category ||
+      categoryMap[recipe.code_category] ||
+      categoryMap[null];
+
+    return {
       ...recipe,
-      category: categoryMap[recipe.code_category] || "Inconnue",
-    }));
-
-  const filteredRecipes = mappedRecipes.filter((recipe) => {
-    const name = recipe.name || recipe.recipe_name || "";
-    const description = recipe.description || "";
-    const filmSerie = recipe.film_serie || "";
-
-    return (
-      name.toLowerCase().includes(searchQuery) ||
-      description.toLowerCase().includes(searchQuery) ||
-      filmSerie.toLowerCase().includes(searchQuery)
-    );
+      category: categoryName,
+      displayName: recipe.name || recipe.recipe_name || "Nom inconnu",
+    };
   });
 
-  const categories = ["Entrée", "Plat", "Dessert"];
+  // 🧩 Organisation par catégorie
+  const categories = ["Entrée", "Plat", "Dessert", "Autre"];
   const recipesByCategory = categories.map((category) => ({
     name: category,
-    recipes: filteredRecipes.filter((r) => r.category === category),
+    recipes: mappedRecipes.filter((r) => r.category === category),
   }));
 
   return (
@@ -69,9 +76,9 @@ function Recipes() {
                 >
                   <img
                     src={`${import.meta.env.VITE_API_URL}/images/${recipe.picture}`}
-                    alt={recipe.name || recipe.recipe_name}
+                    alt={recipe.displayName}
                   />
-                  <h3>{recipe.name || recipe.recipe_name}</h3>
+                  <h3>{recipe.displayName}</h3>
                   <p><strong>Catégorie :</strong> {recipe.category}</p>
                   <p><strong>Œuvre :</strong> {recipe.film_serie || "—"}</p>
                   <p>{recipe.description}</p>
