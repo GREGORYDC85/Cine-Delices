@@ -56,13 +56,15 @@ const adminRoutes = require("./routes/admin");
 const likeRoutes = require("./routes/likes");
 const commentRoutes = require("./routes/comments");
 const adminCommentRoutes = require("./routes/adminComments");
-const adminWorksRoutes = require("./routes/adminWorks"); // ✅ Nouvelle route pour les œuvres
+const adminWorksRoutes = require("./routes/adminWorks");
+const adminUsersRoutes = require("./routes/adminUsers"); // ✅ Import nouvelle route
 
 // 📦 Montage des routes
 app.use("/auth", authRoutes);
 app.use("/admin", adminRoutes);
 app.use("/admin/comments", adminCommentRoutes);
-app.use("/admin/works", adminWorksRoutes); // ✅ Activation de la route
+app.use("/admin/works", adminWorksRoutes);
+app.use("/admin/users", adminUsersRoutes); // ✅ Activation route users
 app.use("/api/likes", likeRoutes);
 app.use("/api/comments", commentRoutes);
 
@@ -82,7 +84,7 @@ app.get("/api/profile", authenticateUser, (req, res) => {
   );
 });
 
-// ✅ Mise à jour des infos du profil
+// ✅ Mise à jour profil
 app.put("/api/profile/update", authenticateUser, (req, res) => {
   const userId = req.user.id;
   const { pseudo, email, firstname, name, gender, birthdate, description } =
@@ -100,7 +102,7 @@ app.put("/api/profile/update", authenticateUser, (req, res) => {
   );
 });
 
-// 🔐 Changement de mot de passe
+// ✅ Changement de mot de passe
 app.put("/api/profile/password", authenticateUser, async (req, res) => {
   const userId = req.user.id;
   const { newPassword } = req.body;
