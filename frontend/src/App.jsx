@@ -37,15 +37,31 @@ function App() {
           <Route path="/sitemap" element={<PlanDuSite />} />
           <Route path="/legal-mentions" element={<MentionsLegales />} />
 
-          {/* ✅ Dashboard admin protégé */}
-          <Route path="/admin/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
+          {/* ✅ Dashboard admin protégé par rôle */}
+          <Route
+            path="/admin/dashboard"
+            element={<PrivateRoute element={<Dashboard />} adminOnly={true} />}
+          />
 
-          {/* ✅ Routes admin supplémentaires */}
-          <Route path="/admin/recettes" element={<PrivateRoute element={<AdminRecettes />} />} />
-          <Route path="/admin/utilisateurs" element={<PrivateRoute element={<AdminUtilisateurs />} />} />
-          <Route path="/admin/commentaires" element={<PrivateRoute element={<AdminCommentaires />} />} />
-          <Route path="/admin/works" element={<PrivateRoute element={<AdminWorks />} />} /> {/* 🆕 Nouvelle route */}
+          {/* ✅ Routes admin protégées */}
+          <Route
+            path="/admin/recettes"
+            element={<PrivateRoute element={<AdminRecettes />} adminOnly={true} />}
+          />
+          <Route
+            path="/admin/utilisateurs"
+            element={<PrivateRoute element={<AdminUtilisateurs />} adminOnly={true} />}
+          />
+          <Route
+            path="/admin/commentaires"
+            element={<PrivateRoute element={<AdminCommentaires />} adminOnly={true} />}
+          />
+          <Route
+            path="/admin/works"
+            element={<PrivateRoute element={<AdminWorks />} adminOnly={true} />}
+          />
 
+          {/* ❌ Page introuvable */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>

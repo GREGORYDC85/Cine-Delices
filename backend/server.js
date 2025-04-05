@@ -55,10 +55,14 @@ const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
 const likeRoutes = require("./routes/likes");
 const commentRoutes = require("./routes/comments");
+const adminCommentRoutes = require("./routes/adminComments");
+const adminWorksRoutes = require("./routes/adminWorks"); // ✅ Nouvelle route pour les œuvres
 
 // 📦 Montage des routes
 app.use("/auth", authRoutes);
 app.use("/admin", adminRoutes);
+app.use("/admin/comments", adminCommentRoutes);
+app.use("/admin/works", adminWorksRoutes); // ✅ Activation de la route
 app.use("/api/likes", likeRoutes);
 app.use("/api/comments", commentRoutes);
 
@@ -178,7 +182,7 @@ app.get("/recipes", (req, res) => {
   });
 });
 
-// 🔍 Recherche de recettes (corrigée)
+// 🔍 Recherche de recettes
 app.get("/recipes/search", (req, res) => {
   const search = `%${req.query.q.toLowerCase()}%`;
 
