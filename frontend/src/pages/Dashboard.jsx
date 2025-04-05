@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-import "./Dashboard.css"; // si tu veux un style dédié
+import "./Dashboard.css";
 
 function Dashboard() {
   const [message, setMessage] = useState("");
@@ -43,6 +43,7 @@ function Dashboard() {
           <li><Link to="/admin/recettes">📖 Recettes</Link></li>
           <li><Link to="/admin/utilisateurs">👥 Utilisateurs</Link></li>
           <li><Link to="/admin/commentaires">💬 Commentaires</Link></li>
+          <li><Link to="/admin/works">🎬 Œuvres (films & séries)</Link></li> {/* 👈 AJOUT ICI */}
         </ul>
       </div>
     </div>

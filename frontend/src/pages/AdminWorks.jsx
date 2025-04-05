@@ -1,67 +1,65 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import "./AdminRecettes.css"; // réutilise les styles du dashboard
+import "./AdminWorks.css";
 
 function AdminWorks() {
   const [works, setWorks] = useState([]);
-  const [newWork, setNewWork] = useState("");
+  const [newTitle, setNewTitle] = useState("");
   const [editingId, setEditingId] = useState(null);
-  const [editTitle, setEditTitle] = useState("");
+  const [editedTitle, setEditedTitle] = useState("");
+
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    fetchWorks();
-  }, []);
-
+  // 🔄 Charger les œuvres existantes
   const fetchWorks = () => {
     axios
       .get(`${import.meta.env.VITE_API_URL}/admin/works`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setWorks(res.data))
-      .catch((err) => console.error("❌ Erreur chargement œuvres :", err));
+      .catch((err) => console.error("❌ Erreur chargement des œuvres :", err));
   };
 
-  const handleAdd = (e) => {
-    e.preventDefault();
-    if (!newWork.trim()) return;
+  useEffect(() => {
+    fetchWorks();
+  }, []);
+
+  // ➕ Ajouter une œuvre
+  const handleAdd = () => {
+    if (!newTitle.trim()) return;
 
     axios
       .post(
         `${import.meta.env.VITE_API_URL}/admin/works`,
-        { title: newWork },
+        { title: newTitle },
         { headers: { Authorization: `Bearer ${token}` } }
       )
       .then(() => {
+        setNewTitle("");
         fetchWorks();
-        setNewWork("");
       })
       .catch((err) => console.error("❌ Erreur ajout œuvre :", err));
   };
 
-  const handleEdit = (id, title) => {
-    setEditingId(id);
-    setEditTitle(title);
-  };
-
-  const handleEditSubmit = (e) => {
-    e.preventDefault();
-    if (!editTitle.trim()) return;
+  // ✏️ Modifier une œuvre
+  const handleEdit = (id) => {
+    if (!editedTitle.trim()) return;
 
     axios
       .put(
-        `${import.meta.env.VITE_API_URL}/admin/works/${editingId}`,
-        { title: editTitle },
+        `${import.meta.env.VITE_API_URL}/admin/works/${id}`,
+        { title: editedTitle },
         { headers: { Authorization: `Bearer ${token}` } }
       )
       .then(() => {
-        fetchWorks();
         setEditingId(null);
-        setEditTitle("");
+        setEditedTitle("");
+        fetchWorks();
       })
       .catch((err) => console.error("❌ Erreur modification œuvre :", err));
   };
 
+  // 🗑️ Supprimer une œuvre
   const handleDelete = (id) => {
     if (!window.confirm("Supprimer cette œuvre ?")) return;
 
@@ -74,80 +72,66 @@ function AdminWorks() {
   };
 
   return (
-    <div className="admin-recettes-container">
-      <h1>🎥 Gestion des œuvres (films / séries)</h1>
+    <div className="admin-works-container">
+      <h1>🎬 Gestion des œuvres</h1>
 
-      <form className="add-recipe-form" onSubmit={handleAdd}>
+      <div className="add-work-form">
         <input
-          value={newWork}
-          onChange={(e) => setNewWork(e.target.value)}
-          placeholder="Titre de l'œuvre"
-          required
+          type="text"
+          placeholder="Titre du film ou de la série"
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
         />
-        <button type="submit" className="add-btn">
-          ➕ Ajouter
-        </button>
-      </form>
+        <button onClick={handleAdd}>➕ Ajouter</button>
+      </div>
 
-      <hr />
-
-      {works.length === 0 ? (
-        <p>Aucune œuvre enregistrée.</p>
-      ) : (
-        <table className="admin-recette-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Titre</th>
-              <th>Actions</th>
+      <table className="admin-works-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Titre</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {works.map((work) => (
+            <tr key={work.code_work}>
+              <td>{work.code_work}</td>
+              <td>
+                {editingId === work.code_work ? (
+                  <input
+                    type="text"
+                    value={editedTitle}
+                    onChange={(e) => setEditedTitle(e.target.value)}
+                  />
+                ) : (
+                  work.title
+                )}
+              </td>
+              <td>
+                {editingId === work.code_work ? (
+                  <>
+                    <button onClick={() => handleEdit(work.code_work)}>💾</button>
+                    <button onClick={() => setEditingId(null)}>❌</button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        setEditingId(work.code_work);
+                        setEditedTitle(work.title);
+                      }}
+                    >
+                      ✏️
+                    </button>
+                    <button onClick={() => handleDelete(work.code_work)}>🗑️</button>
+                  </>
+                )}
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {works.map((work) => (
-              <tr key={work.code_work}>
-                <td>{work.code_work}</td>
-                <td>
-                  {editingId === work.code_work ? (
-                    <form onSubmit={handleEditSubmit}>
-                      <input
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        required
-                      />
-                      <button type="submit" className="edit-btn">
-                        ✅
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setEditingId(null)}
-                        className="cancel-btn"
-                      >
-                        ❌
-                      </button>
-                    </form>
-                  ) : (
-                    work.title
-                  )}
-                </td>
-                <td>
-                  <button
-                    className="edit-btn"
-                    onClick={() => handleEdit(work.code_work, work.title)}
-                  >
-                    ✏️ Modifier
-                  </button>
-                  <button
-                    className="delete-btn"
-                    onClick={() => handleDelete(work.code_work)}
-                  >
-                    🗑️ Supprimer
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
