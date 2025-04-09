@@ -12,7 +12,7 @@ function AdminCommentaires() {
 
   const fetchComments = async () => {
     try {
-      const res = await axios.get("http://localhost:5002/admin/comments", {
+      const res = await axios.get("http://localhost:5002/admin/comments/all", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setComments(res.data);
