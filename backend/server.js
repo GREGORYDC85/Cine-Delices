@@ -66,7 +66,7 @@ app.use("/admin/comments", adminCommentRoutes);
 app.use("/admin/works", adminWorksRoutes);
 app.use("/admin/users", adminUsersRoutes); // ✅ Activation route users
 app.use("/api/likes", likeRoutes);
-app.use("/api/comments", commentRoutes);
+app.use("/admin/comments", adminCommentRoutes);
 
 // ✅ Route profil utilisateur connecté
 app.get("/api/profile", authenticateUser, (req, res) => {
