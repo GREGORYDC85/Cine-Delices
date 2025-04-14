@@ -12,7 +12,8 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5002`;
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
