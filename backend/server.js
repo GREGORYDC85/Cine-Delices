@@ -28,7 +28,7 @@ db.connect((err) => {
   console.log("✅ Connecté à MySQL");
 });
 
-// 🔐 Middleware d'authentification
+// 🔐 Middlewares
 const authenticateUser = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ error: "Aucun token fourni." });
@@ -42,7 +42,6 @@ const authenticateUser = (req, res, next) => {
   }
 };
 
-// 🔐 Middleware pour restreindre aux admins
 const authorizeAdmin = (req, res, next) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ error: "Accès interdit (admin uniquement)" });
@@ -57,16 +56,16 @@ const likeRoutes = require("./routes/likes");
 const commentRoutes = require("./routes/comments");
 const adminCommentRoutes = require("./routes/adminComments");
 const adminWorksRoutes = require("./routes/adminWorks");
-const adminUsersRoutes = require("./routes/adminUsers"); // ✅ Import nouvelle route
+const adminUsersRoutes = require("./routes/adminUsers");
 
 // 📦 Montage des routes
 app.use("/auth", authRoutes);
 app.use("/admin", adminRoutes);
 app.use("/admin/comments", adminCommentRoutes);
 app.use("/admin/works", adminWorksRoutes);
-app.use("/admin/users", adminUsersRoutes); // ✅ Activation route users
+app.use("/admin/users", adminUsersRoutes);
 app.use("/api/likes", likeRoutes);
-app.use("/admin/comments", adminCommentRoutes);
+app.use("/api/comments", commentRoutes); // ✅ route manquante ajoutée ici
 
 // ✅ Route profil utilisateur connecté
 app.get("/api/profile", authenticateUser, (req, res) => {
@@ -128,7 +127,7 @@ app.put("/api/profile/password", authenticateUser, async (req, res) => {
   }
 });
 
-// ✅ Récupérer les recettes likées
+// ✅ Recettes likées
 app.get("/api/likes", authenticateUser, (req, res) => {
   const userId = req.user.id;
 
