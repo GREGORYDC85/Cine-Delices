@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Header from "./components/Header/Header";
 import Footer from "./components/Footer/Footer";
+import Breadcrumb from "./components/Breadcrumb"; // ✅ Fil d'Ariane ajouté
 import Home from "./pages/Home";
 import Recipes from "./pages/Recipes";
 import RecipeDetail from "./pages/RecipeDetail";
@@ -19,12 +20,13 @@ import "./styles/global.css";
 import AdminRecettes from "./pages/AdminRecettes";
 import AdminUtilisateurs from "./pages/AdminUtilisateurs";
 import AdminCommentaires from "./pages/AdminCommentaires";
-import AdminWorks from "./pages/AdminWorks"; // 🆕 Import de la nouvelle page
+import AdminWorks from "./pages/AdminWorks";
 
 function App() {
   return (
     <Router>
       <Header />
+      <Breadcrumb /> {/* ✅ Insertion du fil d'Ariane ici */}
       <div className="main-content">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -37,13 +39,11 @@ function App() {
           <Route path="/sitemap" element={<PlanDuSite />} />
           <Route path="/legal-mentions" element={<MentionsLegales />} />
 
-          {/* ✅ Dashboard admin protégé par rôle */}
+          {/* ✅ Dashboard admin protégé */}
           <Route
             path="/admin/dashboard"
             element={<PrivateRoute element={<Dashboard />} adminOnly={true} />}
           />
-
-          {/* ✅ Routes admin protégées */}
           <Route
             path="/admin/recettes"
             element={<PrivateRoute element={<AdminRecettes />} adminOnly={true} />}
@@ -61,7 +61,7 @@ function App() {
             element={<PrivateRoute element={<AdminWorks />} adminOnly={true} />}
           />
 
-          {/* ❌ Page introuvable */}
+          {/* ❌ Page 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
