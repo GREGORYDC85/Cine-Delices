@@ -21,7 +21,6 @@ const Breadcrumb = () => {
   const [recipeName, setRecipeName] = useState(null);
 
   useEffect(() => {
-    // 👉 Si on est sur une recette
     if (pathnames[0] === "recettes" && pathnames[1]) {
       const id = pathnames[1];
       fetch(`http://localhost:5002/recipes/${id}`)
@@ -43,10 +42,14 @@ const Breadcrumb = () => {
         </li>
 
         {pathnames.map((value, index) => {
-          const to = `/${pathnames.slice(0, index + 1).join("/")}`;
+          let to = `/${pathnames.slice(0, index + 1).join("/")}`;
           const isLast = index === pathnames.length - 1;
 
-          // Si on est sur /recettes/:id → afficher le nom
+          // ✅ Corrige le lien /recettes vers /recipes
+          if (pathnames[0] === "recettes" && index === 0) {
+            to = "/recipes";
+          }
+
           let label = labelMap[value] || decodeURIComponent(value);
           if (pathnames[0] === "recettes" && index === 1 && recipeName) {
             label = recipeName;
