@@ -12,13 +12,14 @@ function CommentSection({ recipeId, user }) {
   const token = localStorage.getItem("token");
   const commentsEndRef = useRef(null);
 
+  // ✅ URL dynamique depuis .env
+  const API_URL = import.meta.env.VITE_API_URL;
+
   // 🔄 Charger les commentaires
   const fetchComments = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(
-        `http://localhost:5002/api/comments/${recipeId}`
-      );
+      const response = await axios.get(`${API_URL}/api/comments/${recipeId}`);
       setComments(response.data);
     } catch (error) {
       console.error("❌ Erreur lors du chargement des commentaires :", error);
@@ -42,7 +43,7 @@ function CommentSection({ recipeId, user }) {
     if (!newComment.trim()) return;
     try {
       await axios.post(
-        "http://localhost:5002/api/comments",
+        `${API_URL}/api/comments`,
         { description: newComment, recipeId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -58,7 +59,7 @@ function CommentSection({ recipeId, user }) {
     if (!editedText.trim()) return;
     try {
       await axios.put(
-        `http://localhost:5002/api/comments/${id}`,
+        `${API_URL}/api/comments/${id}`,
         { description: editedText },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -73,7 +74,7 @@ function CommentSection({ recipeId, user }) {
   // 🗑️ Supprimer un commentaire
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5002/api/comments/${id}`, {
+      await axios.delete(`${API_URL}/api/comments/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchComments();
@@ -154,9 +155,7 @@ function CommentSection({ recipeId, user }) {
                         ✏️ Modifier
                       </button>
                     )}
-                    <button
-                      onClick={() => handleDelete(comment.code_comment)}
-                    >
+                    <button onClick={() => handleDelete(comment.code_comment)}>
                       🗑️ Supprimer
                     </button>
                   </div>
