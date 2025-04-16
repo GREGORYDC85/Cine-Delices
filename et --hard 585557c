@@ -1,0 +1,36 @@
+[33m1b76eb6[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m ✅ Ajout de la route /api/comments + fix du serveur backend pour les commentaires
+[33m585557c[m ✨ Admin : interface de gestion des commentaires - Affichage des commentaires avec pseudo, recette, description et date - Bouton d'approbation (✅) - Suppression de commentaire (�️) - Protection des routes côté backend
+[33m8f38269[m � Ajout de la gestion complète des utilisateurs dans le dashboard admin : affichage, édition des rôles et suppression ✅
+[33m5cff232[m ✅ Ajout d'une interface admin pour gérer les œuvres (films & séries) depuis le dashboard
+[33m5bb4d18[m ✨ Ajout et affichage des commentaires OK — l'appli parle enfin ! �
+[33m7d3cbf8[m � Fonctionnalités profil finalisées : affichage des infos + recettes likées OK ��
+[33m37079b8[m ✅ Ajout d'une recette depuis le dashboard admin fonctionnel
+[33md57d79e[m feat(admin): ajout et gestion complète des recettes avec ingrédients
+[33mcfe55da[m Admin : création du dashboard + affichage des recettes + suppression possible
+[33m2bc2da0[m � Style : titres dorés sur la page d'accueil
+[33m951f2c1[m � Mise à jour de l'inscription côté front : email + mot de passe uniquement
+[33m97fc729[m ✨ Ajout du système de likes + affichage des recettes likées dans le profil
+[33m1781021[m � API pour les likes de recettes + routes sécurisées
+[33maa9d899[m � Intégration de la section commentaires (ajout, édition, suppression) dans RecipeDetail
+[33mbff1bb3[m � Ajout complet des commentaires avec édition, suppression, rôle admin, timestamp
+[33m3a9d2b3[m � Ajout du filtrage par catégorie dans la barre de recherche des recettes
+[33m25bdfcf[m � Mise à jour complète du profil utilisateur (pseudo, description, genre, date de naissance, email, mot de passe)
+[33m95461aa[m ✅ Ajout des quantités d'ingrédients, instructions détaillées et correction de la barre de recherche
+[33m7981eb7[m � Correction footer bloquant le scroll de la page d'accueil
+[33mc971297[m � Ajout et affichage des images de recettes sur les pages détaillées et liste
+[33me4e52ec[m Ajout des images pour les 12 recettes dans le dossier public/images
+[33m6a06c66[m ✅ Ajout de la route /recipes/:id pour les détails des recettes + affichage instructions
+[33m2be50e3[m Amélioration des pages Connexion & Inscription, correction des routes et affichage des pages Mentions Légales & Plan du site
+[33mffc8f23[m � Amélioration de l'affichage des recettes par catégorie et design
+[33me6586dd[m � Amélioration du footer et correction des couleurs
+[33m595442d[m � Correction du Dashboard Admin et affichage des recettes par catégorie
+[33m7400fd5[m � Fix PrivateRoute & Admin Dashboard access
+[33mcc068e2[m � Fix connexion et gestion du token + stabilité des ports
+[33m7df71b6[m � Fonctionnalités connexion et affichage menu selon rôle utilisateur fonctionnelles
+[33me22aac2[m � Correction route login frontend vers /auth/login
+[33m46f8208[m Ajout des styles pour la page d'accueil et mise à jour du CSS
+[33md04ce6d[m Premier commit - Initialisation du projet
+[33mee463b2[m Merge branch 'main' of https://github.com/GREGORYDC85/Cine-Delices
+[33m3bc219e[m Premier commit : ajout des fichiers du projet
+[33m4a3ee5b[m Update README.md
+[33me573ce0[m Initial commit
