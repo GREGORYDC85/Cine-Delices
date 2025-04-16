@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import "./AdminCommentaires.css"; // Si tu veux du style
+import "./AdminCommentaires.css";
 
 function AdminCommentaires() {
   const [comments, setComments] = useState([]);
   const token = localStorage.getItem("token");
+
+  const API_BASE = import.meta.env.VITE_API_URL || "http://192.168.1.29:5002";
 
   useEffect(() => {
     fetchComments();
@@ -12,25 +14,22 @@ function AdminCommentaires() {
 
   const fetchComments = async () => {
     try {
-      const res = await axios.get("http://localhost:5002/admin/comments/all", {
+      const res = await axios.get(`${API_BASE}/admin/comments/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setComments(res.data);
     } catch (err) {
-      console.error("❌ Erreur récupération commentaires :", err);
+      console.error("❌ Erreur récupération des commentaires (admin) :", err);
+      alert("❌ Erreur récupération des commentaires (admin)");
     }
   };
 
   const approveComment = async (id) => {
     try {
-      await axios.put(
-        `http://localhost:5002/admin/comments/${id}/approve`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      fetchComments(); // Refresh après action
+      await axios.put(`${API_BASE}/admin/comments/${id}/approve`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchComments();
     } catch (err) {
       console.error("❌ Erreur approbation :", err);
     }
@@ -39,10 +38,10 @@ function AdminCommentaires() {
   const deleteComment = async (id) => {
     if (!window.confirm("❌ Supprimer ce commentaire ?")) return;
     try {
-      await axios.delete(`http://localhost:5002/admin/comments/${id}`, {
+      await axios.delete(`${API_BASE}/admin/comments/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      fetchComments(); // Refresh après action
+      fetchComments();
     } catch (err) {
       console.error("❌ Erreur suppression :", err);
     }
