@@ -20,32 +20,38 @@ function Profile() {
 
   const token = localStorage.getItem("token");
 
+  // ✅ Adaptation automatique de l'URL selon l'appareil
+  const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5002`;
+
   useEffect(() => {
-    if (!token) return;
+    console.log("📦 [Profile] Token récupéré depuis localStorage :", token);
+
+    if (!token) {
+      console.warn("⚠️ Aucun token trouvé. L'utilisateur n'est probablement pas connecté.");
+      return;
+    }
 
     const fetchUserData = async () => {
       try {
-        console.log("Token utilisé pour récupérer les données :", token); // Vérifie que le token est bien récupéré
-        const res = await axios.get("http://localhost:5002/api/profile", {
+        const res = await axios.get(`${API_URL}/api/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("Données utilisateur récupérées :", res.data); // Affiche les données utilisateur
+        console.log("👤 Données utilisateur récupérées :", res.data);
         setUser(res.data);
       } catch (error) {
-        console.error("❌ Erreur récupération profil :", error);
+        console.error("❌ Erreur lors de la récupération du profil :", error);
       }
     };
 
     const fetchLikedRecipes = async () => {
       try {
-        console.log("Récupération des recettes likées avec le token :", token); // Vérifie que le token est bien récupéré
-        const res = await axios.get("http://localhost:5002/api/likes", {
+        const res = await axios.get(`${API_URL}/api/likes`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("Recettes likées récupérées :", res.data); // Affiche les recettes likées récupérées
+        console.log("💖 Recettes likées récupérées :", res.data);
         setLikedRecipes(res.data);
       } catch (error) {
-        console.error("❌ Erreur récupération recettes likées :", error);
+        console.error("❌ Erreur lors de la récupération des recettes likées :", error);
       }
     };
 
@@ -60,13 +66,13 @@ function Profile() {
         birthdate: user.birthdate ? user.birthdate.split("T")[0] : null,
       };
 
-      await axios.put("http://localhost:5002/api/profile/update", formattedUser, {
+      await axios.put(`${API_URL}/api/profile/update`, formattedUser, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (newPassword) {
         await axios.put(
-          "http://localhost:5002/api/profile/password",
+          `${API_URL}/api/profile/password`,
           { newPassword },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -77,22 +83,21 @@ function Profile() {
       alert("✅ Profil mis à jour !");
       setEditing(false);
     } catch (error) {
-      console.error("❌ Erreur mise à jour profil :", error);
-      alert("⚠️ Une erreur s’est produite.");
+      console.error("❌ Erreur lors de la mise à jour du profil :", error);
+      alert("⚠️ Une erreur est survenue.");
     }
   };
 
   const handleUnlike = async (recipeId) => {
     try {
-      console.log("Suppression du like pour la recette ID :", recipeId); // Affiche l'ID de la recette à supprimer des favoris
-      await axios.delete("http://localhost:5002/api/likes", {
+      await axios.delete(`${API_URL}/api/likes`, {
         data: { recipeId },
         headers: { Authorization: `Bearer ${token}` },
       });
 
       setLikedRecipes((prev) => prev.filter((r) => r.code_recipe !== recipeId));
     } catch (error) {
-      console.error("❌ Erreur suppression like :", error);
+      console.error("❌ Erreur lors de la suppression du like :", error);
     }
   };
 
@@ -186,7 +191,7 @@ function Profile() {
               <li key={recipe.code_recipe}>
                 <Link to={`/recettes/${recipe.code_recipe}`} className="liked-recipe-link">
                   <img
-                    src={`http://localhost:5002/images/${recipe.picture}`}
+                    src={`${API_URL}/images/${recipe.picture}`}
                     alt={recipe.recipe_name}
                     width="100"
                   />
