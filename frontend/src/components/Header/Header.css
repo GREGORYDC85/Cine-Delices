@@ -1,31 +1,28 @@
-/* ✅ Header bien structuré */
+/* ✅ HEADER STRUCTURE */
 .header {
   background-color: #222;
   padding: 10px 30px;
-  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  z-index: 1000;
+  height: 80px; /* 📏 Fixé pour version PC */
 }
 
-/* ✅ Conteneur pour bien gérer les alignements */
+/* ✅ CONTENEUR PRINCIPAL */
 .header-container {
   width: 100%;
+  max-width: 1200px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ✅ LOGO + LIEN ACCUEIL */
+.header-left {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-}
-
-/* ✅ Partie gauche : Logo */
-.header-left a {
-  color: white;             /* ✅ Couleur blanche */
-  text-decoration: none;    /* ❌ Supprimer le soulignement */
-  font-size: 1.1em;
-  margin-left: 15px; /* ✅ Espace entre le logo et le lien */
-}
-
-.header-left a:hover {
-  color: #FFD700;           /* ✨ Jaune au survol (optionnel) */
 }
 
 .logo {
@@ -33,19 +30,38 @@
   width: auto;
 }
 
-/* ✅ Partie centrale : Titre centré + Recettes */
+.header-left a {
+  color: white;
+  text-decoration: none;
+  font-size: 1.1em;
+  margin-left: 15px;
+}
+
+.header-left a:hover {
+  color: #FFD700;
+}
+
+/* ✅ TITRE CENTRAL + LIEN RECETTES */
 .header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
   text-align: center;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  padding: 5px 10px;
 }
 
 .site-title {
   font-size: 26px;
   font-weight: bold;
-  color: #FFD700; /* Jaune foncé */
+  color: #FFD700;
   margin: 0;
+  line-height: 1.2;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  white-space: normal;
 }
 
 .recipes-link {
@@ -61,22 +77,7 @@
   text-decoration: underline;
 }
 
-/* ✅ Lien "Profil" avec même couleur que le H1 */
-.profile-link {
-  color: #FFD700; /* Jaune foncé comme le H1 */
-  text-decoration: none;
-  font-size: 20px;
-  font-weight: bold;
-  display: block;
-  margin-top: 5px;
-}
-
-.profile-link:hover {
-  text-decoration: underline;
-  color: orange; /* Changement de couleur au survol */
-}
-
-/* ✅ Partie droite : Connexion / Inscription */
+/* ✅ PARTIE DROITE : CONNEXION / PROFIL */
 .header-right {
   display: flex;
   flex-direction: column;
@@ -84,14 +85,12 @@
   gap: 5px;
 }
 
-/* ✅ Conteneur des liens */
 .login-container {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
 }
 
-/* ✅ Icône connexion bien placée */
 .login-icon {
   height: 14px;
   width: 14px;
@@ -107,7 +106,8 @@
   font-weight: bold;
 }
 
-.login-link:hover {
+.login-link:hover,
+.signup-link:hover {
   text-decoration: underline;
 }
 
@@ -115,10 +115,6 @@
   color: white;
   text-decoration: none;
   font-weight: bold;
-}
-
-.signup-link:hover {
-  text-decoration: underline;
 }
 
 .logout {
@@ -133,16 +129,51 @@
   text-decoration: underline;
 }
 
-/* ✅ Lien vers le dashboard admin */
+.profile-link,
 .dashboard-link {
-  color: #FFD700; /* Jaune */
-  font-weight: bold;
+  color: #FFD700;
   text-decoration: none;
-  margin-top: 10px;
-  display: inline-block;
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 5px;
 }
 
+.profile-link:hover,
 .dashboard-link:hover {
-  color: #FFCC00; /* Jaune foncé au survol */
+  color: orange;
   text-decoration: underline;
+}
+
+/* ✅ RESPONSIVE MOBILE 📱 */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    height: auto; /* 🧠 Plus de hauteur fixe */
+    padding: 15px 10px;
+  }
+
+  .header-container {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .site-title {
+    font-size: 18px;
+    margin-top: 5px;
+  }
+
+  .header-right {
+    align-items: center;
+  }
+
+  .recipes-link {
+    margin-top: 8px;
+    font-size: 16px;
+  }
+
+  .breadcrumb-container {
+    margin-top: 40px;
+    padding: 0 10px;
+  }
 }
