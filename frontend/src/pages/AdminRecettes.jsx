@@ -31,7 +31,10 @@ function AdminRecettes() {
       .get(`${import.meta.env.VITE_API_URL}/admin/recettes`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      .then((res) => setRecipes(res.data))
+      .then((res) => {
+        console.log("📦 Données recettes reçues :", res.data); // 🐛 Debug
+        setRecipes(res.data);
+      })
       .catch((err) =>
         console.error("❌ Erreur récupération des recettes :", err)
       );
