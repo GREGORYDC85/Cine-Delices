@@ -57,6 +57,7 @@ const commentRoutes = require("./routes/comments");
 const adminCommentRoutes = require("./routes/adminComments");
 const adminWorksRoutes = require("./routes/adminWorks");
 const adminUsersRoutes = require("./routes/adminUsers");
+const adminRecettesRoutes = require("./routes/adminRecettes"); // ✅ Ajout ici
 
 // 📦 Montage des routes
 app.use("/auth", authRoutes);
@@ -64,8 +65,9 @@ app.use("/admin", adminRoutes);
 app.use("/admin/comments", adminCommentRoutes);
 app.use("/admin/works", adminWorksRoutes);
 app.use("/admin/users", adminUsersRoutes);
+app.use("/admin/recettes", adminRecettesRoutes); // ✅ Activation ici
 app.use("/api/likes", likeRoutes);
-app.use("/api/comments", commentRoutes); // ✅ route manquante ajoutée ici
+app.use("/api/comments", commentRoutes); // ✅ Route commentaires front
 
 // ✅ Route profil utilisateur connecté
 app.get("/api/profile", authenticateUser, (req, res) => {
