@@ -12,21 +12,12 @@ function Recipes() {
     2: "Plat",
     3: "Dessert",
     0: "Autre",
-    null: "Autre", // cas inattendus
+    null: "Autre",
   };
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const searchQuery = searchParams.get("search")?.toLowerCase() || "";
-
-    const endpoint = searchQuery
-      ? `/recipes/search?q=${encodeURIComponent(searchQuery)}`
-      : "/recipes";
-
-    console.log("📡 Appel à :", endpoint);
-
     axios
-      .get(`${import.meta.env.VITE_API_URL}${endpoint}`)
+      .get(`${import.meta.env.VITE_API_URL}/recipes`)
       .then((response) => {
         console.log("✅ Données reçues :", response.data);
         setRecipes(response.data);
@@ -34,12 +25,13 @@ function Recipes() {
       .catch((error) => {
         console.error("❌ Erreur lors de la récupération :", error);
       });
-  }, [location.search]);
+  }, []);
 
   // 🔁 Mapping des catégories
   const mappedRecipes = recipes.map((recipe) => {
     const categoryName =
       recipe.category ||
+      recipe.category_name || // si le backend renvoie category_name
       categoryMap[recipe.code_category] ||
       categoryMap[null];
 
@@ -50,11 +42,22 @@ function Recipes() {
     };
   });
 
-  // 🧩 Organisation par catégorie
+  // 🔍 Recherche côté frontend
+  const searchParams = new URLSearchParams(location.search);
+  const searchQuery = searchParams.get("search")?.toLowerCase() || "";
+
+  const filteredRecipes = mappedRecipes.filter((recipe) =>
+    recipe.displayName.toLowerCase().includes(searchQuery) ||
+    recipe.description?.toLowerCase().includes(searchQuery) ||
+    recipe.category?.toLowerCase().includes(searchQuery) ||
+    recipe.film_serie?.toLowerCase().includes(searchQuery)
+  );
+
+  // 🧩 Organisation par catégorie après filtrage
   const categories = ["Entrée", "Plat", "Dessert", "Autre"];
   const recipesByCategory = categories.map((category) => ({
     name: category,
-    recipes: mappedRecipes.filter((r) => r.category === category),
+    recipes: filteredRecipes.filter((r) => r.category === category),
   }));
 
   return (
