@@ -20,6 +20,12 @@ const Breadcrumb = () => {
   const pathnames = location.pathname.split("/").filter((x) => x);
   const [recipeName, setRecipeName] = useState(null);
 
+  // ✅ Corrige le cas "/admin" pour éviter les 404
+  const fixedPathnames = [...pathnames];
+  if (fixedPathnames[0] === "admin" && fixedPathnames.length === 1) {
+    fixedPathnames.push("dashboard");
+  }
+
   useEffect(() => {
     if (pathnames[0] === "recettes" && pathnames[1]) {
       const id = pathnames[1];
@@ -41,17 +47,17 @@ const Breadcrumb = () => {
           <Link to="/">Accueil</Link>
         </li>
 
-        {pathnames.map((value, index) => {
-          let to = `/${pathnames.slice(0, index + 1).join("/")}`;
-          const isLast = index === pathnames.length - 1;
+        {fixedPathnames.map((value, index) => {
+          let to = `/${fixedPathnames.slice(0, index + 1).join("/")}`;
+          const isLast = index === fixedPathnames.length - 1;
 
-          // ✅ Corrige le lien /recettes vers /recipes
-          if (pathnames[0] === "recettes" && index === 0) {
+          // Redirection spéciale pour /recettes vers /recipes
+          if (fixedPathnames[0] === "recettes" && index === 0) {
             to = "/recipes";
           }
 
           let label = labelMap[value] || decodeURIComponent(value);
-          if (pathnames[0] === "recettes" && index === 1 && recipeName) {
+          if (fixedPathnames[0] === "recettes" && index === 1 && recipeName) {
             label = recipeName;
           }
 
@@ -61,7 +67,7 @@ const Breadcrumb = () => {
               {isLast ? (
                 <span>{label}</span>
               ) : (
-                <Link to={to}>{label}</Link>
+                <Link to={to === "/admin" ? "/admin/dashboard" : to}>{label}</Link>
               )}
             </li>
           );
