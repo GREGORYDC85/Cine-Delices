@@ -1,36 +1,41 @@
 name: Deploy Cine-Delices to GitHub Pages
 
+# Déclenche le workflow à chaque push sur main
 on:
   push:
     branches:
-      - main # Déclenche le workflow quand tu pushes sur main
+      - main
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+    steps:
+      # Récupérer le code
+      - uses: actions/checkout@v3
+
+      # Installer Node.js
+      - uses: actions/setup-node@v3
         with:
           node-version: "18"
 
+      # Installer les dépendances
       - name: Install dependencies
         run: npm install
         working-directory: ./frontend
 
+      # Construire le site
       - name: Build
         run: npm run build
         working-directory: ./frontend
 
-      - name: Deploy to GitHub Pages
+      # Déployer sur GitHub Pages
+      - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./frontend/dist
-          publish_branch: gh-pages
+          publish_branch: gh-pages # branche de déploiement
+          publish_dir: ./frontend/dist # dossier build de Vite
+          force_orphan: true # recrée la branche gh-pages proprement
           user_name: "GREGORYDC85"
-          user_email: "GREGORYDC85@users.noreply.github.com"
-          commit_message: "Deploy Cine-Delices via GitHub Actions"
+          user_email: "gdrivoncollin@gmail.com"
