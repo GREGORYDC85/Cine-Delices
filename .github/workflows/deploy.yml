@@ -1,32 +1,36 @@
-name: Deploy to GitHub Pages
+name: Deploy Cine-Delices to GitHub Pages
 
 on:
   push:
     branches:
-      - main
+      - main # Déclenche le workflow quand tu pushes sur main
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # 1️⃣ Récupérer le code
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      # 2️⃣ Installer Node.js
-      - uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: "20"
+          node-version: "18"
 
-      # 3️⃣ Installer les dépendances et builder depuis le dossier frontend
-      - name: Install and build frontend
-        run: |
-          cd frontend
-          npm install
-          npm run build
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./frontend
 
-      # 4️⃣ Publier le dossier dist sur GitHub Pages
+      - name: Build
+        run: npm run build
+        working-directory: ./frontend
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./frontend/dist
+          publish_branch: gh-pages
+          user_name: "GREGORYDC85"
+          user_email: "GREGORYDC85@users.noreply.github.com"
+          commit_message: "Deploy Cine-Delices via GitHub Actions"
