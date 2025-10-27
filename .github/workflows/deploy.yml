@@ -1,40 +1,35 @@
-name: Deploy Cine-Delices site
+name: GitHub Pages Deploy
 
 on:
   push:
     branches:
-      - main # Déclenche le workflow à chaque push sur main
+      - main
 
 jobs:
-  build:
-    name: Build and Deploy
+  build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-      # 1. Checkout du code
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Installer Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "20" # Tu peux adapter à la version de Node que tu utilises
+          node-version: 20
 
-      # 3. Installer les dépendances
       - name: Install dependencies
-        run: npm ci
+        run: npm install
         working-directory: ./frontend
 
-      # 4. Build du projet Vite
       - name: Build
         run: npm run build
         working-directory: ./frontend
 
-      # 5. Déployer sur GitHub Pages
-      - name: Deploy to GitHub Pages
+      - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./frontend/dist
-          destination_branch: gh-pages
+          publish_branch: gh-pages
+          user_name: "GREGORYDC85"
+          user_email: "gdrivoncollin@gmail.com"
