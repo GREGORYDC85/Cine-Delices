@@ -37,3 +37,4 @@ jobs:
           github_token: ${{ secrets.GH_PAGES_TOKEN }}
           publish_dir: ./frontend/dist
           publish_branch: gh-pages
+# trigger
