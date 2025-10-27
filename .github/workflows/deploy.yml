@@ -10,27 +10,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Récupérer le code du dépôt
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 2️⃣ Installer Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
 
+      # 3️⃣ Installer les dépendances frontend
       - name: Install dependencies
-        run: |
-          cd frontend
-          npm install
+        working-directory: frontend
+        run: npm install
 
+      # 4️⃣ Construire le projet Vite
       - name: Build frontend
-        run: |
-          cd frontend
-          npm run build
+        working-directory: frontend
+        run: npm run build
 
+      # 5️⃣ Déployer sur GitHub Pages
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          branch: gh-pages # la branche de déploiement
-          folder: frontend/dist # dossier généré par Vite
-          clean: true
+          branch: gh-pages # Branche cible
+          folder: frontend/dist # Dossier à publier
+          clean: true # Supprime tout le contenu existant avant le déploiement
+          commit-message: "Deploy updated site" # Message du commit sur gh-pages
