@@ -1,6 +1,5 @@
 name: Deploy Cine-Delices to GitHub Pages
 
-# Déclenchement du workflow à chaque push sur main
 on:
   push:
     branches:
@@ -35,10 +34,6 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          # Le token doit être créé en fine-grained et avoir accès en lecture/écriture au dépôt
-          github_token: ${{ secrets.GH_PAGES_TOKEN }}
+          github_token: ${{ secrets.GH_PAGES_DEPLOY }}
           publish_dir: ./frontend/dist
           publish_branch: gh-pages
-          force_orphan: true # Force la création de la branche si elle n'existe pas
-          user_name: "GREGORYDC85"
-          user_email: "gdrivoncollin@gmail.com"
