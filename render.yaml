@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: cine-delices-backend
+    env: node
+    rootDir: backend
+    buildCommand: "npm install"
+    startCommand: "node server.js"
+    plan: free
+    envVars:
+      - key: DB_HOST
+        value: cine-delices-db-gdrivoncollin-7ddc.i.aivencloud.com
+      - key: DB_PORT
+        value: 17025
+      - key: DB_USER
+        value: avnadmin
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        value: cine_delices
+      - key: DB_SSL
+        value: true
+      - key: JWT_SECRET
+        value: maSuperCleSecrete
+      - key: PORT
+        value: 10000
+
+  - type: web
+    name: cine-delices-frontend
+    env: static
+    rootDir: frontend
+    buildCommand: "npm install && npm run build"
+    staticPublishPath: dist
+    plan: free
+    envVars:
+      - key: VITE_API_URL
+        value: https://cine-delices-backend.onrender.com
