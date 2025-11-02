@@ -5,7 +5,7 @@ services:
     rootDir: backend
     buildCommand: "npm install"
     startCommand: "node server.js"
-    plan: free
+    plan: starter
     envVars:
       - key: DB_HOST
         value: cine-delices-db-gdrivoncollin-7ddc.i.aivencloud.com
@@ -30,7 +30,7 @@ services:
     rootDir: frontend
     buildCommand: "npm install && npm run build"
     staticPublishPath: dist
-    plan: free
+    plan: starter
     envVars:
       - key: VITE_API_URL
         value: https://cine-delices-backend.onrender.com
