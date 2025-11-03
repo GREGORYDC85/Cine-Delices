@@ -1,10 +1,8 @@
 // ================================
 // 🌐 Configuration & Imports
 // ================================
-
-// ✅ Ne charge .env qu'en local (pas sur Render)
 if (process.env.NODE_ENV !== "production") {
-  require("dotenv").config();
+  require("dotenv").config(); // Charge .env uniquement en local
 }
 
 console.log("🔍 Variables d'environnement détectées :");
@@ -27,7 +25,16 @@ const app = express();
 // ================================
 // 🌍 Middlewares globaux
 // ================================
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://cine-delices-frontend.onrender.com",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use("/images", express.static("public/images"));
 
@@ -43,7 +50,6 @@ const dbOptions = {
   connectTimeout: 10000,
 };
 
-// 🔐 SSL activé uniquement si DB_SSL = "true"
 if (process.env.DB_SSL === "true") {
   dbOptions.ssl = { rejectUnauthorized: false };
   console.log("🔐 SSL activé pour connexion MySQL Aiven");
@@ -51,9 +57,6 @@ if (process.env.DB_SSL === "true") {
 
 console.log("🧩 Configuration MySQL finale :", dbOptions);
 
-// ================================
-// 🔌 Connexion MySQL
-// ================================
 const db = mysql.createConnection(dbOptions);
 
 db.connect((err) => {
@@ -65,7 +68,36 @@ db.connect((err) => {
 });
 
 // ================================
-// 📡 ROUTES API
+// 🧱 Middleware d'authentification admin
+// ================================
+function verifyAdmin(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ message: "Token manquant" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "maSuperCleSecrete"
+    );
+
+    if (decoded.role !== "admin") {
+      return res
+        .status(403)
+        .json({ message: "Accès refusé : administrateur requis" });
+    }
+
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: "Token invalide ou expiré" });
+  }
+}
+
+// ================================
+// 📡 ROUTES PUBLIQUES
 // ================================
 app.get("/", (req, res) => {
   res.send("🚀 API CineDélices connectée à Aiven et déployée sur Render !");
@@ -79,8 +111,12 @@ app.get("/recipes", (req, res) => {
       r.name AS recipe_name, 
       r.picture, 
       r.description, 
+      c.name AS category, 
+      c.code_category, 
       w.title AS film_serie
     FROM recipe r
+    LEFT JOIN recipe_category rc ON r.code_recipe = rc.code_recipe
+    LEFT JOIN category c ON rc.code_category = c.code_category
     LEFT JOIN recipe_work rw ON r.code_recipe = rw.code_recipe
     LEFT JOIN work w ON rw.code_work = w.code_work
     ORDER BY r.code_recipe;
@@ -104,8 +140,14 @@ app.get("/recipes/:id", (req, res) => {
       r.name AS recipe_name, 
       r.picture, 
       r.description, 
+      c.name AS category, 
+      c.code_category, 
+      r.instruction,
+      r.ingredients,
       w.title AS film_serie
     FROM recipe r
+    LEFT JOIN recipe_category rc ON r.code_recipe = rc.code_recipe
+    LEFT JOIN category c ON rc.code_category = c.code_category
     LEFT JOIN recipe_work rw ON r.code_recipe = rw.code_recipe
     LEFT JOIN work w ON rw.code_work = w.code_work
     WHERE r.code_recipe = ?;
@@ -118,6 +160,32 @@ app.get("/recipes/:id", (req, res) => {
     }
     res.json(result.length ? result[0] : { message: "Recette non trouvée" });
   });
+});
+
+// ================================
+// 🧮 Route Admin - Dashboard
+// ================================
+app.get("/admin/dashboard", verifyAdmin, async (req, res) => {
+  try {
+    const [[recipesCount], [usersCount], [worksCount], [commentsCount]] =
+      await Promise.all([
+        db.promise().query("SELECT COUNT(*) AS count FROM recipe"),
+        db.promise().query("SELECT COUNT(*) AS count FROM user"),
+        db.promise().query("SELECT COUNT(*) AS count FROM work"),
+        db.promise().query("SELECT COUNT(*) AS count FROM comment"),
+      ]);
+
+    res.json({
+      message: "Bienvenue, administrateur Cine-Délices !",
+      recipesCount: recipesCount[0]?.count || 0,
+      usersCount: usersCount[0]?.count || 0,
+      worksCount: worksCount[0]?.count || 0,
+      commentsCount: commentsCount[0]?.count || 0,
+    });
+  } catch (error) {
+    console.error("❌ Erreur Dashboard :", error);
+    res.status(500).json({ error: "Erreur serveur lors du calcul des stats" });
+  }
 });
 
 // ================================
