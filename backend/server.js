@@ -80,12 +80,16 @@ db.connect((err) => {
 // ================================
 const authRoutes = require("./routes/auth"); // ✅ Ajouté
 const adminRoutes = require("./routes/admin"); // ✅ (si tu veux les routes admin séparées)
+const likesRoutes = require("./routes/likes");
+const commentsRoutes = require("./routes/comments");
 
 // ================================
 // 📦 Utilisation des routes
 // ================================
 app.use("/auth", authRoutes); // ✅ active /auth/login et /auth/register
 app.use("/admin", adminRoutes); // ✅ active /admin/dashboard, /admin/works, etc.
+app.use("/api/likes", likesRoutes); // pour les likes ❤️
+app.use("/comments", commentsRoutes); // pour les commentaires 💬
 
 // ================================
 // 📡 ROUTES PUBLIQUES

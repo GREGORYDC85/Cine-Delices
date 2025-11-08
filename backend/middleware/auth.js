@@ -1,27 +1,29 @@
+// backend/middleware/auth.js
 const jwt = require("jsonwebtoken");
 
-const authenticateUser = (req, res, next) => {
-  const token = req.header("Authorization"); // Récupère le token
-  console.log("Token reçu :", token); // 🔥 Vérifie si le token arrive bien
+function authenticateUser(req, res, next) {
+  // ✅ Récupère le token dans les headers, insensible à la casse
+  const authHeader = req.headers.authorization || req.headers.Authorization;
 
-  if (!token) {
-    console.log("❌ Aucun token reçu !");
-    return res.status(401).json({ error: "Accès refusé. Aucun token fourni." });
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    console.warn("❌ Aucun token Bearer trouvé dans l'en-tête Authorization");
+    return res.status(401).json({ error: "Accès refusé. Token manquant." });
   }
 
+  const token = authHeader.split(" ")[1]; // Garde seulement le token
   try {
-    const cleanToken = token.replace("Bearer ", ""); // Supprime "Bearer "
-    console.log("Token nettoyé :", cleanToken); // 🔥 Vérifie le token avant vérification
-
-    const decoded = jwt.verify(cleanToken, process.env.JWT_SECRET);
-    console.log("✅ Token décodé :", decoded); // 🔥 Vérifie si le token est valide
-
-    req.user = decoded;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+    };
+    console.log("✅ Utilisateur authentifié :", req.user);
     next();
   } catch (err) {
-    console.error("❌ Erreur JWT :", err.message); // 🔥 Affiche l'erreur exacte
-    res.status(400).json({ error: "Token invalide." });
+    console.error("❌ Erreur JWT :", err.message);
+    return res.status(401).json({ error: "Token invalide ou expiré." });
   }
-};
+}
 
 module.exports = authenticateUser;
