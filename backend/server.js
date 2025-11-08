@@ -23,18 +23,29 @@ const bcrypt = require("bcrypt");
 const app = express();
 
 // ================================
-// 🌍 Middlewares globaux
+// 🌍 Middleware CORS sécurisé (Render + local)
 // ================================
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://cine-delices-frontend.onrender.com",
+];
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://cine-delices-frontend.onrender.com",
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        console.warn("🚫 CORS refusé pour :", origin);
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
 );
+
 app.use(express.json());
 app.use("/images", express.static("public/images"));
 
@@ -48,12 +59,9 @@ const dbOptions = {
   database: process.env.DB_NAME?.trim(),
   port: Number(process.env.DB_PORT) || 17025,
   connectTimeout: 10000,
+  ssl:
+    process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : undefined,
 };
-
-if (process.env.DB_SSL === "true") {
-  dbOptions.ssl = { rejectUnauthorized: false };
-  console.log("🔐 SSL activé pour connexion MySQL Aiven");
-}
 
 console.log("🧩 Configuration MySQL finale :", dbOptions);
 
@@ -68,33 +76,16 @@ db.connect((err) => {
 });
 
 // ================================
-// 🧱 Middleware d'authentification admin
+// 🔗 Import des routes
 // ================================
-function verifyAdmin(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).json({ message: "Token manquant" });
-  }
+const authRoutes = require("./routes/auth"); // ✅ Ajouté
+const adminRoutes = require("./routes/admin"); // ✅ (si tu veux les routes admin séparées)
 
-  const token = authHeader.split(" ")[1];
-  try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || "maSuperCleSecrete"
-    );
-
-    if (decoded.role !== "admin") {
-      return res
-        .status(403)
-        .json({ message: "Accès refusé : administrateur requis" });
-    }
-
-    req.user = decoded;
-    next();
-  } catch (error) {
-    return res.status(401).json({ message: "Token invalide ou expiré" });
-  }
-}
+// ================================
+// 📦 Utilisation des routes
+// ================================
+app.use("/auth", authRoutes); // ✅ active /auth/login et /auth/register
+app.use("/admin", adminRoutes); // ✅ active /admin/dashboard, /admin/works, etc.
 
 // ================================
 // 📡 ROUTES PUBLIQUES
@@ -143,7 +134,6 @@ app.get("/recipes/:id", (req, res) => {
       c.name AS category, 
       c.code_category, 
       r.instruction,
-      r.ingredients,
       w.title AS film_serie
     FROM recipe r
     LEFT JOIN recipe_category rc ON r.code_recipe = rc.code_recipe
@@ -160,32 +150,6 @@ app.get("/recipes/:id", (req, res) => {
     }
     res.json(result.length ? result[0] : { message: "Recette non trouvée" });
   });
-});
-
-// ================================
-// 🧮 Route Admin - Dashboard
-// ================================
-app.get("/admin/dashboard", verifyAdmin, async (req, res) => {
-  try {
-    const [[recipesCount], [usersCount], [worksCount], [commentsCount]] =
-      await Promise.all([
-        db.promise().query("SELECT COUNT(*) AS count FROM recipe"),
-        db.promise().query("SELECT COUNT(*) AS count FROM user"),
-        db.promise().query("SELECT COUNT(*) AS count FROM work"),
-        db.promise().query("SELECT COUNT(*) AS count FROM comment"),
-      ]);
-
-    res.json({
-      message: "Bienvenue, administrateur Cine-Délices !",
-      recipesCount: recipesCount[0]?.count || 0,
-      usersCount: usersCount[0]?.count || 0,
-      worksCount: worksCount[0]?.count || 0,
-      commentsCount: commentsCount[0]?.count || 0,
-    });
-  } catch (error) {
-    console.error("❌ Erreur Dashboard :", error);
-    res.status(500).json({ error: "Erreur serveur lors du calcul des stats" });
-  }
 });
 
 // ================================
