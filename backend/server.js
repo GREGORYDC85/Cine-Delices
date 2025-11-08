@@ -160,4 +160,4 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Serveur CineDélices lancé sur le port ${PORT}`);
 });
 
-module.exports = db;
+module.exports = require("./config/db");
