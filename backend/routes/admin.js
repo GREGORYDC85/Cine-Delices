@@ -5,15 +5,42 @@ const authorizeAdmin = require("../middleware/admin");
 
 const router = express.Router();
 
-// 🔐 Middleware : toutes les routes ci-dessous sont sécurisées
+// 🔐 Middleware global : toutes les routes ci-dessous nécessitent un admin authentifié
 router.use(authenticateUser, authorizeAdmin);
 
-// 🧪 Dashboard admin simple
-router.get("/dashboard", (req, res) => {
-  res.json({ message: "Bienvenue sur le dashboard admin", admin: req.user });
+// ================================
+// 🧮 DASHBOARD ADMIN (statistiques globales)
+// ================================
+router.get("/dashboard", async (req, res) => {
+  try {
+    const connection = await db.promise();
+
+    const [[recipesCount], [usersCount], [worksCount], [commentsCount]] =
+      await Promise.all([
+        connection.query("SELECT COUNT(*) AS count FROM recipe"),
+        connection.query("SELECT COUNT(*) AS count FROM site_user"), // ✅ corrigé
+        connection.query("SELECT COUNT(*) AS count FROM work"),
+        connection.query("SELECT COUNT(*) AS count FROM comment"),
+      ]);
+
+    res.json({
+      message: "Bienvenue, administrateur Cine-Délices !",
+      recipesCount: recipesCount[0]?.count || 0,
+      usersCount: usersCount[0]?.count || 0,
+      worksCount: worksCount[0]?.count || 0,
+      commentsCount: commentsCount[0]?.count || 0,
+    });
+  } catch (err) {
+    console.error("❌ Erreur Dashboard :", err);
+    res
+      .status(500)
+      .json({ message: "Erreur serveur lors du calcul des statistiques." });
+  }
 });
 
-// 📚 Liste des œuvres
+// ================================
+// 🎬 ŒUVRES (films/séries)
+// ================================
 router.get("/works", async (req, res) => {
   try {
     const connection = await db.promise();
@@ -27,7 +54,6 @@ router.get("/works", async (req, res) => {
   }
 });
 
-// ➕ Ajouter une œuvre
 router.post("/works", async (req, res) => {
   const { title } = req.body;
   if (!title || title.trim() === "") {
@@ -46,7 +72,9 @@ router.post("/works", async (req, res) => {
   }
 });
 
-// ✅ Récupérer toutes les recettes avec la catégorie (correction ici)
+// ================================
+// 🍽️ RECETTES (admin CRUD)
+// ================================
 router.get("/recettes", async (req, res) => {
   try {
     const connection = await db.promise();
