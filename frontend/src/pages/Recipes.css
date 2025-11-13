@@ -1,51 +1,37 @@
-.recipes-container {
-  padding: 20px;
+/* ✅ États de chargement/erreur (cohérents avec ton thème) */
+.loading, .error {
   text-align: center;
-}
-
-.category-section {
-  margin-bottom: 40px;
-}
-
-.category-title {
-  font-size: 1.8rem;
-  color:  #FFD700;
-  margin-bottom: 15px;
-  border-bottom: 2px solid  #FFD700;
-  display: inline-block;
-  padding-bottom: 5px;
-}
-
-.recipe-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
-}
-
-.recipe-card {
-  width: 280px;
-  background-color: #222;
+  padding: 2rem;
+  font-size: 1.2rem;
   color: white;
-  text-align: center;
-  padding: 15px;
+  background-color: rgba(0, 0, 0, 0.5);
   border-radius: 10px;
-  text-decoration: none;
-  transition: transform 0.2s;
+  margin: 20px auto;
+  max-width: 500px;
 }
 
+.error {
+  color: #ff6b6b; /* Rouge clair pour l'erreur */
+  border: 1px solid #ff6b6b;
+}
+
+/* ✅ Amélioration des cartes au survol */
 .recipe-card:hover {
   transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(255, 215, 0, 0.2); /* Ombre dorée subtile */
+  border-color: #FFD700; /* Bordure dorée au survol */
 }
 
-.recipe-card img {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 10px;
+/* ✅ Style pour les paragraphes dans les cartes */
+.recipe-card p {
+  margin: 8px 0;
+  font-size: 0.9rem;
+  color: #ccc; /* Gris clair pour le texte secondaire */
 }
 
-.recipe-card h3 {
-  margin: 10px 0;
-  font-size: 1.4rem;
+/* ✅ Style pour les catégories vides */
+.category-section p {
+  color: #aaa;
+  font-style: italic;
+  margin: 20px 0;
 }

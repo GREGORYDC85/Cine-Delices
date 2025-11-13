@@ -1,25 +1,77 @@
 .admin-users-container {
-    padding: 2rem;
-  }
-  
-  .admin-users-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  
-  .admin-users-table th,
-  .admin-users-table td {
-    border: 1px solid #ccc;
-    padding: 0.75rem;
-    text-align: left;
-  }
-  
-  .admin-users-table th {
-    background-color: #c5a412;
-  }
-  
-  .admin-users-table button {
-    margin-right: 0.5rem;
-    cursor: pointer;
-  }
-  
+  padding: 20px;
+  color: white;
+}
+
+.admin-users-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.admin-users-table th, .admin-users-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #444;
+}
+
+.admin-users-table th {
+  background-color: #333;
+  color: #FFD700;
+}
+
+.admin-users-table tr:hover {
+  background-color: rgba(255, 215, 0, 0.1);
+}
+
+/* ✅ Styles pour les badges de rôle */
+.role-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+}
+
+.role-badge.admin {
+  background-color: #FFD700;
+  color: #333;
+  font-weight: bold;
+}
+
+.role-badge.user {
+  background-color: #444;
+  color: white;
+}
+
+/* ✅ Styles pour les boutons */
+.btn-role, .btn-delete {
+  padding: 6px 12px;
+  margin: 0 5px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-role {
+  background-color: #2196F3; /* Bleu */
+  color: white;
+}
+
+.btn-delete {
+  background-color: #f44336; /* Rouge */
+  color: white;
+}
+
+.btn-role:hover {
+  background-color: #0b7dda;
+}
+
+.btn-delete:hover {
+  background-color: #d32f2f;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #FFD700;
+}

@@ -1,41 +1,72 @@
-.admin-recettes-container {
-    padding: 2rem;
-    color: white;
-  }
-  
-  .admin-recette-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-  }
-  
-  .admin-recette-table th,
-  .admin-recette-table td {
-    border: 1px solid #444;
-    padding: 10px;
-    text-align: left;
-  }
-  
-  .admin-recette-table th {
-    background-color: #FFD700;
-    color: black;
-  }
-  
-  .edit-btn {
-    background-color: #FFCC00;
-    border: none;
-    padding: 5px 10px;
-    margin-right: 5px;
-    cursor: pointer;
-    border-radius: 4px;
-  }
-  
-  .delete-btn {
-    background-color: #cc0000;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    cursor: pointer;
-    border-radius: 4px;
-  }
-  
+/* ✅ Styles pour les états et boutons */
+.admin-comments-container {
+  padding: 20px;
+  color: white;
+}
+
+.comments-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.comments-table th, .comments-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #444;
+}
+
+.comments-table th {
+  background-color: #333;
+  color: #FFD700;
+}
+
+.comments-table tr:hover {
+  background-color: rgba(255, 215, 0, 0.1);
+}
+
+.status-approved {
+  color: #4CAF50; /* Vert */
+}
+
+.status-pending {
+  color: #FF9800; /* Orange */
+}
+
+.btn-approve, .btn-delete {
+  padding: 6px 12px;
+  margin: 0 5px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-approve {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.btn-delete {
+  background-color: #f44336;
+  color: white;
+}
+
+.btn-approve:hover {
+  background-color: #45a049;
+}
+
+.btn-delete:hover {
+  background-color: #d32f2f;
+}
+
+.comment-text {
+  max-width: 300px;
+  word-break: break-word;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #FFD700;
+}

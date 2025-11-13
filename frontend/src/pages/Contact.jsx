@@ -4,17 +4,24 @@ function Contact() {
   return (
     <div className="contact-container">
       <h1>Nous contacter 📩</h1>
-      <p>Si vous avez des questions ou suggestions, n'hésitez pas à nous contacter.</p>
-
-      {/* ✅ Lien "mailto" pour envoyer un e-mail */}
-      <p>
-        📧 Vous pouvez nous écrire à :  
-        <a href="mailto:gdrivoncollin@gmail.com" className="contact-mail">
-          gdrivoncollin@gmail.com
-        </a>
+      <p className="contact-subtitle">
+        Si vous avez des questions, suggestions ou simplement envie de discuter,
+        n'hésitez pas à nous écrire !
       </p>
 
-      <p>Nous vous répondrons dans les plus brefs délais ! 😊</p>
+      <div className="contact-email-box">
+        <p className="contact-prompt">Notre adresse email :</p>
+        <a
+          href="mailto:gdrivoncollin@gmail.com?subject=Contact depuis Ciné Délices"
+          className="contact-mail"
+        >
+          gdrivoncollin@gmail.com
+        </a>
+      </div>
+
+      <p className="contact-response-time">
+        Nous nous engageons à vous répondre dans les <strong>24 à 48 heures</strong> ! 😊
+      </p>
     </div>
   );
 }

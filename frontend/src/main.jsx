@@ -1,5 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter as Router } from "react-router-dom"; // ✅ Ajout pour encapsuler <App />
 import App from "./App";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -10,7 +11,18 @@ const root = createRoot(rootElement);
 
 root.render(
   <StrictMode>
-    <App />
-    <ToastContainer position="top-right" autoClose={2500} />
+    <Router>  {/* ✅ Encapsule <App /> pour activer le routing partout */}
+      <App />
+    </Router>
+    <ToastContainer
+      position="top-right"
+      autoClose={2500}
+      hideProgressBar={false}
+      newestOnTop={true}
+      closeOnClick
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+    />
   </StrictMode>
 );

@@ -1,97 +1,53 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import "./Signup.css";
-
-function Signup() {
-  const [formData, setFormData] = useState({
-    firstname: "",
-    name: "",
-    email: "",
-    password: "",
-  });
-
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const API_URL = import.meta.env.VITE_API_URL;
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      await axios.post(`${API_URL}/auth/register`, formData);
-
-      toast.success("🎉 Inscription réussie ! Vous pouvez vous connecter.");
-      setTimeout(() => {
-        navigate("/login");
-      }, 1500);
-    } catch (err) {
-      toast.error("❌ Erreur lors de l'inscription.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="signup-container">
-      <div className="form-box">
-        <h1>Inscription 📝</h1>
-        <form onSubmit={handleSubmit}>
-          <label>Prénom</label>
-          <input
-            type="text"
-            name="firstname"
-            value={formData.firstname}
-            onChange={handleChange}
-            required
-          />
-
-          <label>Nom</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-
-          <label>Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-
-          <label>Mot de passe</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-
-          <button type="submit" disabled={loading}>
-            {loading ? "Inscription..." : "S'inscrire"}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
+/* src/pages/Signup/Signup.css */
+.signup-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  background-color: #f5f5f5;
 }
 
-export default Signup;
+.form-box {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+.form-box h1 {
+  color: #333;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.form-box label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.form-box input {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.form-box button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #FFD700; /* Jaune doré (ton thème) */
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.form-box button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}

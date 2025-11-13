@@ -1,17 +1,54 @@
 .contact-container {
-    text-align: center;
-    padding: 20px;
-  }
-  
-  .contact-mail {
-    color: #d4a017; /* Jaune foncé (doré) */
-    font-weight: bold;
-    text-decoration: none;
-    font-size: 18px;
-  }
-  
-  .contact-mail:hover {
-    text-decoration: underline;
-    color: #b8860b; /* Un peu plus foncé au survol */
-  }
-  
+  padding: 40px 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+  color: white;
+}
+
+.contact-subtitle {
+  font-size: 1.1rem;
+  margin-bottom: 30px;
+  line-height: 1.6;
+}
+
+.contact-email-box {
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid #FFD700;
+  border-radius: 8px;
+  padding: 30px;
+  margin: 20px 0;
+  display: inline-block;
+}
+
+.contact-prompt {
+  margin-bottom: 10px;
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+.contact-mail {
+  color: #FFD700;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-decoration: none;
+  display: block;
+  transition: all 0.2s;
+}
+
+.contact-mail:hover {
+  color: #FFCC00;
+  text-decoration: underline;
+  transform: scale(1.02);
+}
+
+.contact-response-time {
+  margin-top: 20px;
+  font-size: 1rem;
+  color: #ccc;
+}
+
+.contact-response-time strong {
+  color: #FFD700;
+  font-weight: bold;
+}

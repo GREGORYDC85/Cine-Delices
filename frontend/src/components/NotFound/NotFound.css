@@ -1,0 +1,46 @@
+.not-found-container {
+  text-align: center;
+  padding: 5rem 1rem;
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white; /* ✅ Fond sombre comme ton Header */
+  background-color: #222; /* ✅ Identique à ton Header */
+}
+
+.not-found-title {
+  font-size: 6rem;
+  font-weight: bold;
+  color: #FFD700; /* ✅ Jaune doré (charte graphique) */
+  margin: 0;
+  line-height: 1;
+}
+
+.not-found-subtitle {
+  font-size: 2rem;
+  margin: 1rem 0;
+  color: white;
+}
+
+.not-found-message {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  max-width: 600px;
+}
+
+.not-found-link {
+  display: inline-block;
+  padding: 0.8rem 1.5rem;
+  background-color: #FFD700; /* ✅ Jaune doré */
+  color: #222;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.not-found-link:hover {
+  background-color: #ffcc00; /* ✅ Survol plus clair */
+}
