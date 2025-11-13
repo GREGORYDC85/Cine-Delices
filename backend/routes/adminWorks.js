@@ -1,4 +1,3 @@
-// routes/adminWorks.js
 const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
@@ -6,49 +5,82 @@ const authenticateUser = require("../middleware/auth");
 const authorizeAdmin = require("../middleware/admin");
 
 // ✅ Récupérer toutes les œuvres
-router.get("/", authenticateUser, authorizeAdmin, (req, res) => {
-  db.query("SELECT * FROM work ORDER BY title ASC", (err, results) => {
-    if (err) return res.status(500).json({ error: "Erreur serveur" });
+router.get("/", authenticateUser, authorizeAdmin, async (req, res) => {
+  try {
+    const [results] = await db.query("SELECT * FROM work ORDER BY title ASC");
     res.json(results);
-  });
+  } catch (err) {
+    console.error("❌ Erreur récupération œuvres :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
 
 // ✅ Ajouter une nouvelle œuvre
-router.post("/", authenticateUser, authorizeAdmin, (req, res) => {
+router.post("/", authenticateUser, authorizeAdmin, async (req, res) => {
   const { title } = req.body;
+
   if (!title || title.trim() === "") {
-    return res.status(400).json({ error: "Titre requis" });
+    return res.status(400).json({ error: "Le titre est requis" });
   }
 
-  db.query("INSERT INTO work (title) VALUES (?)", [title], (err, result) => {
-    if (err) return res.status(500).json({ error: "Erreur serveur" });
-    res.status(201).json({ message: "Œuvre ajoutée", id: result.insertId });
-  });
+  try {
+    const [result] = await db.query("INSERT INTO work (title) VALUES (?)", [
+      title.trim(),
+    ]);
+    res.status(201).json({
+      message: "✅ Œuvre ajoutée avec succès",
+      id: result.insertId,
+    });
+  } catch (err) {
+    console.error("❌ Erreur ajout œuvre :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
 
 // ✅ Modifier une œuvre
-router.put("/:id", authenticateUser, authorizeAdmin, (req, res) => {
+router.put("/:id", authenticateUser, authorizeAdmin, async (req, res) => {
   const { id } = req.params;
   const { title } = req.body;
 
-  db.query(
-    "UPDATE work SET title = ? WHERE code_work = ?",
-    [title, id],
-    (err) => {
-      if (err) return res.status(500).json({ error: "Erreur serveur" });
-      res.json({ message: "Titre mis à jour" });
+  if (!title || title.trim() === "") {
+    return res.status(400).json({ error: "Le titre est requis" });
+  }
+
+  try {
+    const [result] = await db.query(
+      "UPDATE work SET title = ? WHERE code_work = ?",
+      [title.trim(), id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Œuvre non trouvée" });
     }
-  );
+
+    res.json({ message: "✅ Titre mis à jour avec succès" });
+  } catch (err) {
+    console.error("❌ Erreur modification œuvre :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
 
 // ✅ Supprimer une œuvre
-router.delete("/:id", authenticateUser, authorizeAdmin, (req, res) => {
+router.delete("/:id", authenticateUser, authorizeAdmin, async (req, res) => {
   const { id } = req.params;
 
-  db.query("DELETE FROM work WHERE code_work = ?", [id], (err) => {
-    if (err) return res.status(500).json({ error: "Erreur serveur" });
-    res.json({ message: "Œuvre supprimée" });
-  });
+  try {
+    const [result] = await db.query("DELETE FROM work WHERE code_work = ?", [
+      id,
+    ]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Œuvre non trouvée" });
+    }
+
+    res.json({ message: "🗑️ Œuvre supprimée avec succès" });
+  } catch (err) {
+    console.error("❌ Erreur suppression œuvre :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
 
 module.exports = router;

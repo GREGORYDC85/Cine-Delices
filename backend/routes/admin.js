@@ -1,8 +1,7 @@
 const express = require("express");
-const db = require("../config/db");
+const db = require("../config/db"); // ✅ Pool MySQL déjà configuré pour les promesses
 const authenticateUser = require("../middleware/auth");
 const authorizeAdmin = require("../middleware/admin");
-
 const router = express.Router();
 
 // 🔐 Middleware global : toutes les routes ci-dessous nécessitent un admin authentifié
@@ -13,16 +12,13 @@ router.use(authenticateUser, authorizeAdmin);
 // ================================
 router.get("/dashboard", async (req, res) => {
   try {
-    const connection = await db.promise();
-
     const [[recipesCount], [usersCount], [worksCount], [commentsCount]] =
       await Promise.all([
-        connection.query("SELECT COUNT(*) AS count FROM recipe"),
-        connection.query("SELECT COUNT(*) AS count FROM site_user"), // ✅ corrigé
-        connection.query("SELECT COUNT(*) AS count FROM work"),
-        connection.query("SELECT COUNT(*) AS count FROM comment"),
+        db.query("SELECT COUNT(*) AS count FROM recipe"),
+        db.query("SELECT COUNT(*) AS count FROM site_user"),
+        db.query("SELECT COUNT(*) AS count FROM work"),
+        db.query("SELECT COUNT(*) AS count FROM comment"),
       ]);
-
     res.json({
       message: "Bienvenue, administrateur Cine-Délices !",
       recipesCount: recipesCount[0]?.count || 0,
@@ -32,9 +28,7 @@ router.get("/dashboard", async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Erreur Dashboard :", err);
-    res
-      .status(500)
-      .json({ message: "Erreur serveur lors du calcul des statistiques." });
+    res.status(500).json({ message: "Erreur serveur." });
   }
 });
 
@@ -43,8 +37,7 @@ router.get("/dashboard", async (req, res) => {
 // ================================
 router.get("/works", async (req, res) => {
   try {
-    const connection = await db.promise();
-    const [works] = await connection.query(
+    const [works] = await db.query(
       "SELECT code_work, title FROM work ORDER BY title"
     );
     res.json(works);
@@ -59,12 +52,8 @@ router.post("/works", async (req, res) => {
   if (!title || title.trim() === "") {
     return res.status(400).json({ message: "Le titre est requis." });
   }
-
   try {
-    const connection = await db.promise();
-    await connection.query("INSERT INTO work (title) VALUES (?)", [
-      title.trim(),
-    ]);
+    await db.query("INSERT INTO work (title) VALUES (?)", [title.trim()]);
     res.status(201).json({ message: "✅ Œuvre ajoutée avec succès !" });
   } catch (err) {
     console.error("❌ Erreur ajout œuvre :", err);
@@ -77,29 +66,29 @@ router.post("/works", async (req, res) => {
 // ================================
 router.get("/recettes", async (req, res) => {
   try {
-    const connection = await db.promise();
-    const [recipes] = await connection.query(`
-      SELECT 
-        r.code_recipe, 
-        r.name, 
-        r.author, 
+    const [recipes] = await db.query(`
+      SELECT
+        r.code_recipe,
+        r.name,
+        r.author,
         rc.code_category,
         COALESCE(c.name, 'Non classée') AS category,
-        r.total_time, 
-        r.servings, 
-        r.picture, 
-        r.description, 
-        r.instruction, 
+        r.total_time,
+        r.servings,
+        r.picture,
+        r.description,
+        r.instruction,
         rw.code_work
       FROM recipe r
       LEFT JOIN recipe_category rc ON r.code_recipe = rc.code_recipe
       LEFT JOIN category c ON rc.code_category = c.code_category
       LEFT JOIN recipe_work rw ON r.code_recipe = rw.code_recipe
+      ORDER BY r.code_recipe DESC
     `);
     res.json(recipes);
   } catch (err) {
     console.error("❌ Erreur récupération recettes :", err);
-    res.status(500).json({ error: "Erreur serveur" });
+    res.status(500).json({ message: "Erreur serveur." });
   }
 });
 

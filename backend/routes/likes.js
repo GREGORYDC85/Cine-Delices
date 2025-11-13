@@ -1,73 +1,136 @@
 const express = require("express");
+const router = express.Router();
 const db = require("../config/db");
 const authenticateUser = require("../middleware/auth");
 
-const router = express.Router();
-
 // ✅ Vérifier si l'utilisateur a liké une recette
-router.get("/:id", authenticateUser, (req, res) => {
+router.get("/:recipeId", authenticateUser, async (req, res) => {
   const userId = req.user.id;
-  const recipeId = req.params.id;
+  const recipeId = req.params.recipeId;
 
-  const query = `
-    SELECT * FROM liked_recipe
-    WHERE code_user = ? AND code_recipe = ?
-  `;
-
-  db.query(query, [userId, recipeId], (err, result) => {
-    if (err) {
-      console.error("❌ Erreur lors de la vérification du like :", err);
-      return res.status(500).json({ liked: false });
+  try {
+    // Vérifier que la recette existe
+    const [recipe] = await db.query(
+      "SELECT 1 FROM recipe WHERE code_recipe = ?",
+      [recipeId]
+    );
+    if (recipe.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "Recette non trouvée", liked: false });
     }
+
+    const [result] = await db.query(
+      `
+      SELECT 1 FROM liked_recipe
+      WHERE code_user = ? AND code_recipe = ?
+    `,
+      [userId, recipeId]
+    );
+
     res.json({ liked: result.length > 0 });
-  });
+  } catch (err) {
+    console.error("❌ Erreur vérification like :", err);
+    res.status(500).json({ error: "Erreur serveur", liked: false });
+  }
 });
 
 // ✅ Ajouter un like
-router.post("/", authenticateUser, (req, res) => {
+router.post("/", authenticateUser, async (req, res) => {
   const userId = req.user.id;
   const { recipeId } = req.body;
 
   if (!recipeId) {
-    return res.status(400).json({ message: "ID de recette manquant." });
+    return res.status(400).json({ error: "L'ID de la recette est requis." });
   }
 
-  const query = `
-    INSERT IGNORE INTO liked_recipe (code_user, code_recipe)
-    VALUES (?, ?)
-  `;
-
-  db.query(query, [userId, recipeId], (err) => {
-    if (err) {
-      console.error("❌ Erreur ajout like :", err);
-      return res.status(500).json({ message: "Erreur serveur." });
+  try {
+    // Vérifier que la recette existe
+    const [recipe] = await db.query(
+      "SELECT 1 FROM recipe WHERE code_recipe = ?",
+      [recipeId]
+    );
+    if (recipe.length === 0) {
+      return res.status(404).json({ error: "Recette non trouvée" });
     }
-    res.status(201).json({ message: "❤️ Recette ajoutée aux favoris." });
-  });
+
+    await db.query(
+      `
+      INSERT IGNORE INTO liked_recipe (code_user, code_recipe)
+      VALUES (?, ?)
+    `,
+      [userId, recipeId]
+    );
+
+    res.status(201).json({
+      message: "❤️ Recette ajoutée aux favoris",
+      liked: true,
+    });
+  } catch (err) {
+    console.error("❌ Erreur ajout like :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
 
 // ✅ Supprimer un like
-router.delete("/", authenticateUser, (req, res) => {
+router.delete("/", authenticateUser, async (req, res) => {
   const userId = req.user.id;
   const { recipeId } = req.body;
 
   if (!recipeId) {
-    return res.status(400).json({ message: "ID de recette manquant." });
+    return res.status(400).json({ error: "L'ID de la recette est requis." });
   }
 
-  const query = `
-    DELETE FROM liked_recipe
-    WHERE code_user = ? AND code_recipe = ?
-  `;
+  try {
+    const [result] = await db.query(
+      `
+      DELETE FROM liked_recipe
+      WHERE code_user = ? AND code_recipe = ?
+    `,
+      [userId, recipeId]
+    );
 
-  db.query(query, [userId, recipeId], (err, result) => {
-    if (err) {
-      console.error("❌ Erreur suppression like :", err);
-      return res.status(500).json({ message: "Erreur serveur." });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Like non trouvé" });
     }
 
-    res.json({ message: "💔 Recette retirée des favoris." });
-  });
+    res.json({
+      message: "💔 Recette retirée des favoris",
+      liked: false,
+    });
+  } catch (err) {
+    console.error("❌ Erreur suppression like :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// ✅ Compter les likes d'une recette (route publique)
+router.get("/count/:recipeId", async (req, res) => {
+  const recipeId = req.params.recipeId;
+
+  try {
+    // Vérifier que la recette existe
+    const [recipe] = await db.query(
+      "SELECT 1 FROM recipe WHERE code_recipe = ?",
+      [recipeId]
+    );
+    if (recipe.length === 0) {
+      return res.status(404).json({ error: "Recette non trouvée", count: 0 });
+    }
+
+    const [result] = await db.query(
+      `
+      SELECT COUNT(*) as count FROM liked_recipe
+      WHERE code_recipe = ?
+    `,
+      [recipeId]
+    );
+
+    res.json({ count: result[0].count });
+  } catch (err) {
+    console.error("❌ Erreur comptage likes :", err);
+    res.status(500).json({ error: "Erreur serveur", count: 0 });
+  }
 });
 
 module.exports = router;

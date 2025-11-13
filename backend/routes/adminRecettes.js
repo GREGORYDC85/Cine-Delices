@@ -8,88 +8,84 @@ const authorizeAdmin = require("../middleware/admin");
 router.use(authenticateUser, authorizeAdmin);
 
 /* ============================================
- ✅ Route publique pour breadcrumb
+ ✅ Route publique pour breadcrumb (pas besoin d'auth)
 ============================================ */
-router.get("/public/:id", (req, res) => {
-  const recipeId = req.params.id;
+router.get("/public/:id", async (req, res) => {
+  try {
+    const [results] = await db.query(
+      `
+      SELECT
+        r.code_recipe,
+        r.name
+      FROM recipe r
+      WHERE r.code_recipe = ?
+    `,
+      [req.params.id]
+    );
 
-  const sql = `
-    SELECT 
-      r.code_recipe, 
-      r.name
-    FROM recipe r
-    WHERE r.code_recipe = ?
-  `;
-
-  db.query(sql, [recipeId], (err, results) => {
-    if (err) {
-      console.error("❌ Erreur publique récupération recette :", err);
-      return res.status(500).json({ error: "Erreur serveur" });
-    }
     if (results.length === 0) {
       return res.status(404).json({ error: "Recette non trouvée" });
     }
     res.json(results[0]);
-  });
+  } catch (err) {
+    console.error("❌ Erreur publique récupération recette :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
 
 /* ============================================
  ✅ Toutes les recettes
 ============================================ */
-router.get("/", (req, res) => {
-  const sql = `
-    SELECT 
-      r.code_recipe, 
-      r.name, 
-      r.author, 
-      rc.code_category,
-      COALESCE(c.name, 'Non classée') AS category
-    FROM recipe r
-    LEFT JOIN recipe_category rc ON r.code_recipe = rc.code_recipe
-    LEFT JOIN category c ON rc.code_category = c.code_category
-    ORDER BY r.code_recipe DESC
-  `;
-
-  db.query(sql, (err, results) => {
-    if (err) {
-      console.error("❌ Erreur récupération des recettes :", err);
-      return res.status(500).json({ error: "Erreur serveur" });
-    }
-
-    console.log("📊 Recettes récupérées côté backend :", results);
+router.get("/", async (req, res) => {
+  try {
+    const [results] = await db.query(`
+      SELECT
+        r.code_recipe,
+        r.name,
+        r.author,
+        rc.code_category,
+        COALESCE(c.name, 'Non classée') AS category
+      FROM recipe r
+      LEFT JOIN recipe_category rc ON r.code_recipe = rc.code_recipe
+      LEFT JOIN category c ON rc.code_category = c.code_category
+      ORDER BY r.code_recipe DESC
+    `);
     res.json(results);
-  });
+  } catch (err) {
+    console.error("❌ Erreur récupération des recettes :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
 
 /* ============================================
- ✅ Détail d’une recette
+ ✅ Détail d'une recette
 ============================================ */
-router.get("/:id", (req, res) => {
-  const recipeId = req.params.id;
+router.get("/:id", async (req, res) => {
+  try {
+    const [results] = await db.query(
+      `
+      SELECT
+        r.code_recipe,
+        r.name,
+        r.author,
+        rc.code_category,
+        COALESCE(c.name, 'Non classée') AS category
+      FROM recipe r
+      LEFT JOIN recipe_category rc ON r.code_recipe = rc.code_recipe
+      LEFT JOIN category c ON rc.code_category = c.code_category
+      WHERE r.code_recipe = ?
+    `,
+      [req.params.id]
+    );
 
-  const sql = `
-    SELECT 
-      r.code_recipe, 
-      r.name, 
-      r.author, 
-      rc.code_category,
-      COALESCE(c.name, 'Non classée') AS category
-    FROM recipe r
-    LEFT JOIN recipe_category rc ON r.code_recipe = rc.code_recipe
-    LEFT JOIN category c ON rc.code_category = c.code_category
-    WHERE r.code_recipe = ?
-  `;
-
-  db.query(sql, [recipeId], (err, results) => {
-    if (err) {
-      console.error("❌ Erreur récupération de la recette :", err);
-      return res.status(500).json({ error: "Erreur serveur" });
-    }
     if (results.length === 0) {
       return res.status(404).json({ error: "Recette non trouvée" });
     }
     res.json(results[0]);
-  });
+  } catch (err) {
+    console.error("❌ Erreur récupération de la recette :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
 
 /* ============================================
@@ -111,18 +107,17 @@ router.post("/", async (req, res) => {
   } = req.body;
 
   try {
-    const connection = await db.promise();
-
+    // Gestion de l'œuvre
     let finalWorkId = code_work;
     if (!finalWorkId && new_work_title?.trim()) {
-      const [result] = await connection.query(
-        "INSERT INTO work (title) VALUES (?)",
-        [new_work_title.trim()]
-      );
+      const [result] = await db.query("INSERT INTO work (title) VALUES (?)", [
+        new_work_title.trim(),
+      ]);
       finalWorkId = result.insertId;
     }
 
-    const [recipeResult] = await connection.query(
+    // Ajout de la recette
+    const [recipeResult] = await db.query(
       `
       INSERT INTO recipe (name, picture, total_time, servings, author, description, instruction)
       VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -132,38 +127,41 @@ router.post("/", async (req, res) => {
 
     const recipeId = recipeResult.insertId;
 
-    // Lier à la catégorie
-    await connection.query(
+    // Lien avec la catégorie
+    await db.query(
       "INSERT INTO recipe_category (code_recipe, code_category) VALUES (?, ?)",
       [recipeId, code_category]
     );
 
-    // Lier à l'œuvre si besoin
+    // Lien avec l'œuvre si nécessaire
     if (finalWorkId) {
-      await connection.query(
+      await db.query(
         "INSERT INTO recipe_work (code_recipe, code_work) VALUES (?, ?)",
         [recipeId, finalWorkId]
       );
     }
 
-    // Ingrédients
+    // Gestion des ingrédients
     for (const { name: ingredientName, quantity } of ingredients) {
       if (!ingredientName?.trim()) continue;
 
-      const [existing] = await connection.query(
+      // Vérification si l'ingrédient existe
+      const [existing] = await db.query(
         "SELECT code_ingredient FROM ingredient WHERE name = ?",
         [ingredientName.trim()]
       );
 
-      let ingredientId = existing.length
+      // Récupération ou création de l'ingrédient
+      const ingredientId = existing.length
         ? existing[0].code_ingredient
         : (
-            await connection.query("INSERT INTO ingredient (name) VALUES (?)", [
+            await db.query("INSERT INTO ingredient (name) VALUES (?)", [
               ingredientName.trim(),
             ])
           )[0].insertId;
 
-      await connection.query(
+      // Lien avec la recette
+      await db.query(
         "INSERT INTO contains (code_recipe, code_ingredient, quantity) VALUES (?, ?, ?)",
         [recipeId, ingredientId, quantity]
       );
@@ -196,12 +194,18 @@ router.put("/:id", async (req, res) => {
   } = req.body;
 
   try {
-    const connection = await db.promise();
-
-    await connection.query(
+    // Mise à jour de la recette
+    await db.query(
       `
-      UPDATE recipe SET name = ?, picture = ?, total_time = ?, servings = ?, author = ?, 
-      description = ?, instruction = ? WHERE code_recipe = ?
+      UPDATE recipe SET
+        name = ?,
+        picture = ?,
+        total_time = ?,
+        servings = ?,
+        author = ?,
+        description = ?,
+        instruction = ?
+      WHERE code_recipe = ?
     `,
       [
         name,
@@ -215,48 +219,50 @@ router.put("/:id", async (req, res) => {
       ]
     );
 
-    await connection.query(
+    // Mise à jour de la catégorie
+    await db.query(
       "REPLACE INTO recipe_category (code_recipe, code_category) VALUES (?, ?)",
       [recipeId, code_category]
     );
 
+    // Gestion de l'œuvre
     let finalWorkId = code_work;
     if (!finalWorkId && new_work_title?.trim()) {
-      const [result] = await connection.query(
-        "INSERT INTO work (title) VALUES (?)",
-        [new_work_title.trim()]
-      );
+      const [result] = await db.query("INSERT INTO work (title) VALUES (?)", [
+        new_work_title.trim(),
+      ]);
       finalWorkId = result.insertId;
     }
 
+    // Mise à jour de l'œuvre si nécessaire
     if (finalWorkId) {
-      await connection.query(
+      await db.query(
         "REPLACE INTO recipe_work (code_recipe, code_work) VALUES (?, ?)",
         [recipeId, finalWorkId]
       );
     }
 
-    await connection.query("DELETE FROM contains WHERE code_recipe = ?", [
-      recipeId,
-    ]);
+    // Suppression des anciens ingrédients
+    await db.query("DELETE FROM contains WHERE code_recipe = ?", [recipeId]);
 
+    // Ajout des nouveaux ingrédients
     for (const { name: ingredientName, quantity } of ingredients) {
       if (!ingredientName?.trim()) continue;
 
-      const [existing] = await connection.query(
+      const [existing] = await db.query(
         "SELECT code_ingredient FROM ingredient WHERE name = ?",
         [ingredientName.trim()]
       );
 
-      let ingredientId = existing.length
+      const ingredientId = existing.length
         ? existing[0].code_ingredient
         : (
-            await connection.query("INSERT INTO ingredient (name) VALUES (?)", [
+            await db.query("INSERT INTO ingredient (name) VALUES (?)", [
               ingredientName.trim(),
             ])
           )[0].insertId;
 
-      await connection.query(
+      await db.query(
         "INSERT INTO contains (code_recipe, code_ingredient, quantity) VALUES (?, ?, ?)",
         [recipeId, ingredientId, quantity]
       );
@@ -273,19 +279,15 @@ router.put("/:id", async (req, res) => {
  ✅ Supprimer une recette
 ============================================ */
 router.delete("/:id", async (req, res) => {
-  const recipeId = req.params.id;
-
   try {
-    const connection = await db.promise();
-    const [result] = await connection.query(
+    const [result] = await db.query(
       "DELETE FROM recipe WHERE code_recipe = ?",
-      [recipeId]
+      [req.params.id]
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Recette introuvable." });
     }
-
     res.json({ message: "🗑️ Recette supprimée avec succès." });
   } catch (err) {
     console.error("❌ Erreur suppression recette :", err);
