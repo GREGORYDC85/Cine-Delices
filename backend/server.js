@@ -4,7 +4,6 @@
 if (process.env.NODE_ENV !== "production") {
   require("dotenv").config(); // Charge .env uniquement en local
 }
-
 const express = require("express");
 const mysql = require("mysql2/promise"); // Utilisation de mysql2/promise pour async/await
 const cors = require("cors");
@@ -19,7 +18,6 @@ const allowedOrigins = [
   "http://localhost:5173",
   "https://cine-delices-frontend.onrender.com",
 ];
-
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -35,7 +33,6 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
 );
-
 app.use(express.json());
 app.use("/images", express.static("public/images"));
 
@@ -52,7 +49,6 @@ const dbOptions = {
   ssl:
     process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : undefined,
 };
-
 console.log("🧩 Configuration MySQL finale :", {
   host: dbOptions.host,
   user: dbOptions.user,
@@ -60,7 +56,6 @@ console.log("🧩 Configuration MySQL finale :", {
   port: dbOptions.port,
   ssl: !!dbOptions.ssl,
 });
-
 const db = mysql.createPool(dbOptions);
 db.on("connection", () => console.log("✅ Nouvelle connexion MySQL établie"));
 db.on("error", (err) => console.error("❌ Erreur MySQL (pool) :", err));
@@ -112,47 +107,61 @@ app.get("/recipes", async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("❌ Erreur SQL (toutes les recettes) :", err);
-    res.status(500).json({ error: "Erreur serveur" });
+    res.status(500).json({ error: "Erreur serveur", details: err.message });
   }
 });
 
 // 📜 Route : recette par ID (avec ingrédients)
 app.get("/recipes/:id", async (req, res) => {
   const recipeId = req.params.id;
-  const recipeQuery = `
-    SELECT
-      r.code_recipe,
-      r.name AS recipe_name,
-      r.picture,
-      r.description,
-      r.instruction,
-      c.name AS category,
-      w.title AS film_serie
-    FROM recipe r
-    LEFT JOIN recipe_category rc ON r.code_recipe = rc.code_recipe
-    LEFT JOIN category c ON rc.code_category = c.code_category
-    LEFT JOIN recipe_work rw ON r.code_recipe = rw.code_recipe
-    LEFT JOIN work w ON rw.code_work = w.code_work
-    WHERE r.code_recipe = ?;
-  `;
-  const ingredientsQuery = `
-    SELECT i.name, i.quantity
-    FROM contains co
-    JOIN ingredient i ON co.code_ingredient = i.code_ingredient
-    WHERE co.code_recipe = ?;
-  `;
+  console.log(`🔍 Recherche de la recette ID: ${recipeId}`);
+
   try {
+    // Requête pour la recette
+    const recipeQuery = `
+      SELECT
+        r.code_recipe,
+        r.name AS recipe_name,
+        r.picture,
+        r.description,
+        r.instruction,
+        c.name AS category,
+        w.title AS film_serie
+      FROM recipe r
+      LEFT JOIN recipe_category rc ON r.code_recipe = rc.code_recipe
+      LEFT JOIN category c ON rc.code_category = c.code_category
+      LEFT JOIN recipe_work rw ON r.code_recipe = rw.code_recipe
+      LEFT JOIN work w ON rw.code_work = w.code_work
+      WHERE r.code_recipe = ?;
+    `;
     const [recipeResult] = await db.query(recipeQuery, [recipeId]);
+
     if (recipeResult.length === 0) {
+      console.log(`❌ Recette ${recipeId} non trouvée`);
       return res.status(404).json({ error: "Recette non trouvée" });
     }
+
+    // Requête pour les ingrédients
+    const ingredientsQuery = `
+      SELECT i.name, co.quantity
+      FROM contains co
+      JOIN ingredient i ON co.code_ingredient = i.code_ingredient
+      WHERE co.code_recipe = ?;
+    `;
     const [ingredientsResult] = await db.query(ingredientsQuery, [recipeId]);
+
     const recipe = recipeResult[0];
     recipe.ingredients = ingredientsResult;
+    console.log(`✅ Recette ${recipeId} chargée avec succès`);
     res.json(recipe);
   } catch (err) {
-    console.error("❌ Erreur SQL (recette/ingrédients) :", err);
-    res.status(500).json({ error: "Erreur serveur" });
+    console.error("❌ Erreur SQL détaillée :", {
+      message: err.message,
+      sqlMessage: err.sqlMessage,
+      sql: err.sql,
+      code: err.code,
+    });
+    res.status(500).json({ error: "Erreur serveur", details: err.message });
   }
 });
 
@@ -162,12 +171,10 @@ app.get("/recipes/:id", async (req, res) => {
 app.use((req, res, next) => {
   res.status(404).json({ error: "Route non trouvée" });
 });
-
 app.use((err, req, res, next) => {
   console.error("❌ Erreur serveur :", err);
   res.status(500).json({ error: "Erreur interne du serveur" });
 });
-
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Serveur CineDélices lancé sur le port ${PORT}`);

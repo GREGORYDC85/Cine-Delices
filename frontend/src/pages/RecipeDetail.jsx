@@ -1,5 +1,6 @@
+// frontend/src/pages/RecipeDetail.jsx
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import "./RecipeDetail.css";
 import CommentSection from "../components/CommentSection/CommentSection";
@@ -10,32 +11,36 @@ function RecipeDetail() {
   const [recipe, setRecipe] = useState(null);
   const [user, setUser] = useState(null);
   const [liked, setLiked] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // 🔄 Charger la recette
-    axios
-      .get(`${import.meta.env.VITE_API_URL}/recipes/${id}`)
-      .then((response) => setRecipe(response.data))
-      .catch((error) =>
-        console.error("❌ Erreur lors de la récupération de la recette :", error)
-      );
+    // ✅ Utilisation de VITE_API_URL pour l'API backend
+    axios.get(`${import.meta.env.VITE_API_URL}/recipes/${id}`)
+      .then((response) => {
+        setRecipe(response.data);
+      })
+      .catch((error) => {
+        console.error("❌ Erreur lors de la récupération de la recette :", error);
+        setError("Impossible de charger la recette.");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
 
-    // 👤 Décoder le token utilisateur
     const token = localStorage.getItem("token");
     if (token) {
       try {
         const decoded = jwtDecode(token);
         setUser(decoded);
-
-        // ✅ Vérifie si la recette est déjà likée
-        axios
-          .get(`${import.meta.env.VITE_API_URL}/api/likes/${id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-          .then((res) => {
-            setLiked(res.data.liked);
-          })
-          .catch((err) => console.error("❌ Erreur like check :", err));
+        // ✅ Utilisation de VITE_API_URL pour les likes
+        axios.get(`${import.meta.env.VITE_API_URL}/api/likes/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => {
+          setLiked(res.data.liked);
+        })
+        .catch((err) => console.error("❌ Erreur like check :", err));
       } catch (error) {
         console.error("❌ Erreur lors du décodage du token :", error);
       }
@@ -48,16 +53,14 @@ function RecipeDetail() {
       if (liked) {
         await axios.delete(`${import.meta.env.VITE_API_URL}/api/likes`, {
           headers: { Authorization: `Bearer ${token}` },
-          data: { recipeId: id }, // ✅ N'oublie pas "data" pour DELETE
+          data: { recipeId: id },
         });
         setLiked(false);
       } else {
         await axios.post(
           `${import.meta.env.VITE_API_URL}/api/likes`,
           { recipeId: id },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         setLiked(true);
       }
@@ -66,54 +69,53 @@ function RecipeDetail() {
     }
   };
 
-  if (!recipe) return <p>Chargement...</p>;
+  if (loading) return <p className="loading">Chargement...</p>;
+  if (error) return <p className="error">{error}</p>;
+  if (!recipe) return <p className="error">Recette introuvable.</p>;
 
   return (
     <div className="recipe-detail">
-      <h1>{recipe.recipe_name}</h1>
-
+      <Link to="/recettes" className="back-link">← Retour aux recettes</Link>
+      <h1>{recipe.recipe_name || recipe.name}</h1>
       <img
-        src={`${import.meta.env.VITE_API_URL}/images/${recipe.picture}`}
-        alt={recipe.recipe_name}
+        src={recipe.picture ? `${import.meta.env.VITE_API_URL}/images/${recipe.picture}` : '/placeholder-local.jpg'}
+        alt={recipe.recipe_name || recipe.name}
         className="recipe-image"
+        onError={(e) => { e.target.src = '/placeholder-local.jpg'; }}
       />
+      <div className="recipe-info">
+        <p><strong>Catégorie :</strong> {recipe.category || "Non spécifiée"}</p>
+        {recipe.film_serie && <p><strong>Inspiré de :</strong> {recipe.film_serie}</p>}
+        <p className="description">{recipe.description}</p>
 
-      <p><strong>Catégorie :</strong> {recipe.category}</p>
-      <p><strong>Inspiré de :</strong> {recipe.film_serie}</p>
-      <p><strong>Description :</strong> {recipe.description}</p>
+        {recipe.ingredients && recipe.ingredients.length > 0 && (
+          <>
+            <h2>🛒 Ingrédients</h2>
+            <ul className="ingredients-list">
+              {recipe.ingredients.map((ingredient, index) => (
+                <li key={index}>
+                  {ingredient.name} - {ingredient.quantity}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
 
-      {recipe.ingredients ? (
-        <div>
-          <h2>🛒 Ingrédients :</h2>
-          <ul>
-            {recipe.ingredients.split(", ").map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <p>❌ Aucun ingrédient renseigné.</p>
-      )}
+        {recipe.instruction && (
+          <>
+            <h2>👨‍🍳 Instructions</h2>
+            <p className="instruction">{recipe.instruction}</p>
+          </>
+        )}
 
-      {recipe.instruction ? (
-        <div>
-          <h2>👨‍🍳 Instructions :</h2>
-          <p style={{ whiteSpace: "pre-line" }}>{recipe.instruction}</p>
-        </div>
-      ) : (
-        <p>❌ Aucune instruction disponible.</p>
-      )}
-
-      {/* ❤️ Bouton "Ajouter aux favoris" */}
-      {user && (
-        <div className="like-section">
-          <button className="like-button" onClick={handleToggleLike}>
-            {liked ? "❤️ Retirer des favoris" : "🤍 Ajouter aux favoris"}
-          </button>
-        </div>
-      )}
-
-      {/* 💬 Commentaires */}
+        {user && (
+          <div className="like-section">
+            <button className="like-button" onClick={handleToggleLike}>
+              {liked ? "❤️ Retirer des favoris" : "🤍 Ajouter aux favoris"}
+            </button>
+          </div>
+        )}
+      </div>
       <CommentSection recipeId={recipe.code_recipe} user={user} />
     </div>
   );

@@ -1,4 +1,4 @@
-/* ✅ États de chargement/erreur (cohérents avec ton thème) */
+/* ✅ Tes styles existants (à garder) */
 .loading, .error {
   text-align: center;
   padding: 2rem;
@@ -11,27 +11,103 @@
 }
 
 .error {
-  color: #ff6b6b; /* Rouge clair pour l'erreur */
+  color: #ff6b6b;
   border: 1px solid #ff6b6b;
 }
 
-/* ✅ Amélioration des cartes au survol */
 .recipe-card:hover {
   transform: scale(1.05);
-  box-shadow: 0 8px 16px rgba(255, 215, 0, 0.2); /* Ombre dorée subtile */
-  border-color: #FFD700; /* Bordure dorée au survol */
+  box-shadow: 0 8px 16px rgba(255, 215, 0, 0.2);
+  border-color: #FFD700;
 }
 
-/* ✅ Style pour les paragraphes dans les cartes */
 .recipe-card p {
   margin: 8px 0;
   font-size: 0.9rem;
-  color: #ccc; /* Gris clair pour le texte secondaire */
+  color: #ccc;
 }
 
-/* ✅ Style pour les catégories vides */
 .category-section p {
   color: #aaa;
   font-style: italic;
   margin: 20px 0;
+}
+
+/* ✅ NOUVEAUX STYLES POUR LA GRILLE ET LES CARTES */
+.recipes-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.category-title {
+  color: #FFD700; /* Doré pour les titres de catégorie */
+  border-bottom: 2px solid #FFD700;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+/* ✅ Grille pour 3 recettes par ligne */
+.recipe-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* 3 colonnes */
+  gap: 20px; /* Espacement entre les cartes */
+}
+
+/* ✅ Style des cartes de recettes */
+.recipe-card {
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid #444; /* Bordure sombre pour un style cinéma */
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  background: rgba(20, 20, 20, 0.8); /* Fond semi-transparent noir */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  display: block; /* Important pour les liens */
+}
+
+/* ✅ Taille fixe et style des images */
+.recipe-card img {
+  width: 100%;
+  height: 200px; /* Hauteur fixe pour uniformité */
+  object-fit: cover; /* Remplit l'espace sans déformation */
+  display: block;
+  border-bottom: 1px solid #FFD700; /* Séparation dorée */
+}
+
+/* ✅ Contenu textuel sous l'image */
+.recipe-content {
+  padding: 15px;
+}
+
+.recipe-card h3 {
+  color: #FFD700; /* Titre en doré */
+  margin: 0 0 10px;
+  font-size: 1.1rem;
+}
+
+.recipe-card strong {
+  color: #fff; /* Blanc pour les labels */
+}
+
+.recipe-description {
+  color: #ccc; /* Gris clair pour la description */
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* ✅ Responsive : 2 colonnes sur mobile */
+@media (max-width: 768px) {
+  .recipe-list {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+  }
+}
+
+/* ✅ Effet de bordure dorée au survol (déjà présent dans ton CSS) */
+/* ✅ Ajout d'une transition fluide */
+.recipe-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
