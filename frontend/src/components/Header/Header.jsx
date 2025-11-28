@@ -1,3 +1,4 @@
+// frontend/src/components/Header/Header.jsx
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
@@ -31,11 +32,10 @@ function Header() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-
     const trimmed = searchQuery.trim();
     if (trimmed !== "") {
       console.log("🔎 Lancement de la recherche :", trimmed);
-      navigate(`/recipes?search=${encodeURIComponent(trimmed)}`);
+      navigate(`/recettes?search=${encodeURIComponent(trimmed)}`);
       setSearchQuery("");
     }
   };
@@ -43,21 +43,15 @@ function Header() {
   return (
     <header className="header">
       <div className="header-container">
-        {/* ✅ Logo + lien Accueil */}
         <div className="header-left">
           <img src={logo} alt="Ciné Délices" className="logo" />
           <Link to="/" className="home-link">Accueil</Link>
         </div>
-
-        {/* ✅ Titre + Lien Recettes + Barre de recherche */}
         <div className="header-center">
           <h1 className="site-title">🎬Ciné Délices🍿</h1>
-
           <nav className="nav-links">
-            <Link to="/recipes" className="recipes-link">Recettes</Link>
+            <Link to="/recettes" className="recipes-link">Recettes</Link>
           </nav>
-
-          {/* 🔍 Barre de recherche */}
           <form onSubmit={handleSearch} className="search-bar">
             <input
               type="text"
@@ -68,14 +62,11 @@ function Header() {
             <button type="submit">🔍</button>
           </form>
         </div>
-
-        {/* ✅ Connexion / Déconnexion + Dashboard admin */}
         <div className="header-right">
           {user ? (
             <>
               <button onClick={handleLogout} className="logout">Déconnexion</button>
               <Link to="/profile" className="profile-link">👤 Profil</Link>
-
               {user.role === "admin" && (
                 <Link to="/admin/dashboard" className="dashboard-link">⚙️ Dashboard</Link>
               )}

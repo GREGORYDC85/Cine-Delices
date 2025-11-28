@@ -1,4 +1,5 @@
-import { Routes, Route } from "react-router-dom"; // ✅ On retire BrowserRouter (déjà dans main.jsx)
+// frontend/src/App.jsx
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Header from "./components/Header/Header";
 import Footer from "./components/Footer/Footer";
 import Breadcrumb from "./components/Breadcrumb/Breadcrumb";
@@ -14,9 +15,6 @@ import PlanDuSite from "./pages/PlanDuSite";
 import MentionsLegales from "./pages/MentionsLegales";
 import PrivateRoute from "./components/PrivateRoute";
 import NotFound from "./components/NotFound/NotFound";
-import "./styles/global.css";
-
-// ✅ Import des pages admin (ajoute ces imports si manquants)
 import AdminRecettes from "./pages/AdminRecettes";
 import AdminUtilisateurs from "./pages/AdminUtilisateurs";
 import AdminCommentaires from "./pages/AdminCommentaires";
@@ -24,13 +22,13 @@ import AdminWorks from "./pages/AdminWorks";
 
 function App() {
   return (
-    <>
+    <Router>
       <Header />
       <Breadcrumb />
       <div className="main-content">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/recipes" element={<Recipes />} />
+          <Route path="/recettes" element={<Recipes />} />
           <Route path="/recettes/:id" element={<RecipeDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
@@ -38,8 +36,6 @@ function App() {
           <Route path="/profile" element={<PrivateRoute element={<Profile />} />} />
           <Route path="/sitemap" element={<PlanDuSite />} />
           <Route path="/legal-mentions" element={<MentionsLegales />} />
-
-          {/* ✅ Routes admin imbriquées (sans <Router> ici) */}
           <Route path="/admin">
             <Route path="dashboard" element={<PrivateRoute element={<Dashboard />} adminOnly />} />
             <Route path="recettes" element={<PrivateRoute element={<AdminRecettes />} adminOnly />} />
@@ -47,13 +43,11 @@ function App() {
             <Route path="commentaires" element={<PrivateRoute element={<AdminCommentaires />} adminOnly />} />
             <Route path="works" element={<PrivateRoute element={<AdminWorks />} adminOnly />} />
           </Route>
-
-          {/* ✅ Page 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
       <Footer />
-    </>
+    </Router>
   );
 }
 
