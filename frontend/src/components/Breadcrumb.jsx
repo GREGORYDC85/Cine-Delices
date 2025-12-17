@@ -9,30 +9,35 @@ const labelMap = {
   login: "Connexion",
   signup: "Inscription",
   contact: "Contact",
-  "legal-mentions": "Mentions légales",
   sitemap: "Plan du site",
+  "legal-mentions": "Mentions légales",
+
   admin: "Administration",
   dashboard: "Tableau de bord",
+  recettes: "Recettes",
+  utilisateurs: "Utilisateurs",
+  commentaires: "Commentaires",
+  works: "Œuvres",
 };
 
 const Breadcrumb = () => {
   const location = useLocation();
-  const pathnames = location.pathname.split("/").filter((x) => x);
+  const pathnames = location.pathname.split("/").filter(Boolean);
   const [recipeName, setRecipeName] = useState(null);
 
+  // 🔎 Récupération du nom de la recette
   useEffect(() => {
     if (pathnames[0] === "recettes" && pathnames[1]) {
-      const id = pathnames[1];
-      fetch(`http://localhost:5002/recipes/${id}`)
+      fetch(`${import.meta.env.VITE_API_URL}/recipes/${pathnames[1]}`)
         .then((res) => res.json())
-        .then((data) => {
-          setRecipeName(data.recipe_name || data.name || "Recette");
-        })
-        .catch(() => setRecipeName("Recette introuvable"));
+        .then((data) =>
+          setRecipeName(data.name || "Recette")
+        )
+        .catch(() => setRecipeName("Recette"));
     } else {
       setRecipeName(null);
     }
-  }, [location]);
+  }, [location.pathname]);
 
   return (
     <nav className="breadcrumb-container" aria-label="Fil d'Ariane">
@@ -42,22 +47,23 @@ const Breadcrumb = () => {
         </li>
 
         {pathnames.map((value, index) => {
+          let label = labelMap[value] || value;
           let to = `/${pathnames.slice(0, index + 1).join("/")}`;
           const isLast = index === pathnames.length - 1;
 
-          // ✅ Corrige le lien /recettes vers /recipes
-          if (pathnames[0] === "recettes" && index === 0) {
-            to = "/recipes";
+          // 🔐 ADMIN — forcer le premier lien vers /admin/dashboard
+          if (value === "admin") {
+            to = "/admin/dashboard";
           }
 
-          let label = labelMap[value] || decodeURIComponent(value);
+          // 🍽️ Recette détail
           if (pathnames[0] === "recettes" && index === 1 && recipeName) {
             label = recipeName;
           }
 
           return (
             <li key={to}>
-              <span className="breadcrumb-separator">/</span>
+              <span className="breadcrumb-separator"> / </span>
               {isLast ? (
                 <span>{label}</span>
               ) : (

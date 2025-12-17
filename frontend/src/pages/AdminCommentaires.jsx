@@ -6,29 +6,33 @@ function AdminCommentaires() {
   const [comments, setComments] = useState([]);
   const token = localStorage.getItem("token");
 
-  const API_BASE = import.meta.env.VITE_API_URL || "http://192.168.1.29:5002";
+  const API_URL =
+    import.meta.env.VITE_API_URL || "http://localhost:5002";
 
   useEffect(() => {
     fetchComments();
+    // eslint-disable-next-line
   }, []);
 
   const fetchComments = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/admin/comments/all`, {
+      const res = await axios.get(`${API_URL}/api/comments/admin`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setComments(res.data);
     } catch (err) {
-      console.error("❌ Erreur récupération des commentaires (admin) :", err);
-      alert("❌ Erreur récupération des commentaires (admin)");
+      console.error("❌ Erreur récupération commentaires admin :", err);
+      alert("Erreur récupération des commentaires");
     }
   };
 
   const approveComment = async (id) => {
     try {
-      await axios.put(`${API_BASE}/admin/comments/${id}/approve`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.put(
+        `${API_URL}/api/comments/admin/${id}/approve`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       fetchComments();
     } catch (err) {
       console.error("❌ Erreur approbation :", err);
@@ -36,9 +40,10 @@ function AdminCommentaires() {
   };
 
   const deleteComment = async (id) => {
-    if (!window.confirm("❌ Supprimer ce commentaire ?")) return;
+    if (!window.confirm("Supprimer ce commentaire ?")) return;
+
     try {
-      await axios.delete(`${API_BASE}/admin/comments/${id}`, {
+      await axios.delete(`${API_URL}/api/comments/admin/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchComments();
@@ -49,10 +54,10 @@ function AdminCommentaires() {
 
   return (
     <div className="admin-comments-container">
-      <h1>📝 Gestion des Commentaires</h1>
+      <h1>💬 Gestion des commentaires</h1>
 
       {comments.length === 0 ? (
-        <p>Aucun commentaire pour le moment.</p>
+        <p>Aucun commentaire.</p>
       ) : (
         <table className="comments-table">
           <thead>
@@ -66,20 +71,24 @@ function AdminCommentaires() {
             </tr>
           </thead>
           <tbody>
-            {comments.map((com) => (
-              <tr key={com.code_comment}>
-                <td>{com.pseudo}</td>
-                <td>{com.recipe_name}</td>
-                <td>{com.description}</td>
-                <td>{new Date(com.created_at).toLocaleString("fr-FR")}</td>
-                <td>{com.is_approved ? "✅ Approuvé" : "🕒 En attente"}</td>
+            {comments.map((c) => (
+              <tr key={c.code_comment}>
+                <td>{c.pseudo}</td>
+                <td>{c.recipe_name}</td>
+                <td>{c.description}</td>
                 <td>
-                  {!com.is_approved && (
-                    <button onClick={() => approveComment(com.code_comment)}>
+                  {new Date(c.created_at).toLocaleString("fr-FR")}
+                </td>
+                <td>
+                  {c.is_approved ? "✅ Approuvé" : "🕒 En attente"}
+                </td>
+                <td>
+                  {!c.is_approved && (
+                    <button onClick={() => approveComment(c.code_comment)}>
                       ✅ Approuver
                     </button>
                   )}
-                  <button onClick={() => deleteComment(com.code_comment)}>
+                  <button onClick={() => deleteComment(c.code_comment)}>
                     🗑 Supprimer
                   </button>
                 </td>
@@ -92,4 +101,5 @@ function AdminCommentaires() {
   );
 }
 
+/* ⬇️⬇️⬇️ C’EST ÇA QUI MANQUAIT ⬇️⬇️⬇️ */
 export default AdminCommentaires;

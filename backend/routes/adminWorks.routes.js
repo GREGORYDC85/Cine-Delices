@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
-const authenticateUser = require("../middleware/auth");
+const authenticateUser = require("../middleware/auth.middleware");
 const authorizeAdmin = require("../middleware/admin");
 
 // ✅ Récupérer toutes les œuvres

@@ -7,12 +7,11 @@ function Recipes() {
   const [recipes, setRecipes] = useState([]);
   const location = useLocation();
 
+  // 🔁 Mapping des catégories
   const categoryMap = {
     1: "Entrée",
     2: "Plat",
     3: "Dessert",
-    0: "Autre",
-    null: "Autre", // cas inattendus
   };
 
   useEffect(() => {
@@ -23,38 +22,47 @@ function Recipes() {
       ? `/recipes/search?q=${encodeURIComponent(searchQuery)}`
       : "/recipes";
 
-    console.log("📡 Appel à :", endpoint);
+    console.log("📡 Appel API :", endpoint);
 
     axios
       .get(`${import.meta.env.VITE_API_URL}${endpoint}`)
       .then((response) => {
-        console.log("✅ Données reçues :", response.data);
+        console.log("📦 Données reçues :", response.data);
         setRecipes(response.data);
       })
       .catch((error) => {
-        console.error("❌ Erreur lors de la récupération :", error);
+        console.error("❌ Erreur chargement recettes :", error);
       });
   }, [location.search]);
 
-  // 🔁 Mapping des catégories
-  const mappedRecipes = recipes.map((recipe) => {
+  // 🧠 Normalisation des recettes
+  const normalizedRecipes = recipes.map((recipe) => {
+    const codeCategory =
+      Number(recipe.code_category) ||
+      Number(recipe.category_id) ||
+      null;
+
     const categoryName =
       recipe.category ||
-      categoryMap[recipe.code_category] ||
-      categoryMap[null];
+      categoryMap[codeCategory] ||
+      "Autre";
 
     return {
       ...recipe,
+      code_category: codeCategory,
       category: categoryName,
       displayName: recipe.name || recipe.recipe_name || "Nom inconnu",
     };
   });
 
-  // 🧩 Organisation par catégorie
+  // 🧩 Regroupement par catégorie
   const categories = ["Entrée", "Plat", "Dessert", "Autre"];
+
   const recipesByCategory = categories.map((category) => ({
     name: category,
-    recipes: mappedRecipes.filter((r) => r.category === category),
+    recipes: normalizedRecipes.filter(
+      (recipe) => recipe.category === category
+    ),
   }));
 
   return (
@@ -64,6 +72,7 @@ function Recipes() {
       {recipesByCategory.map(({ name, recipes }) => (
         <div key={name} className="category-section">
           <h2 className="category-title">{name}</h2>
+
           <div className="recipe-list">
             {recipes.length === 0 ? (
               <p>Aucune recette trouvée pour cette catégorie.</p>
@@ -74,13 +83,24 @@ function Recipes() {
                   key={recipe.code_recipe}
                   className="recipe-card"
                 >
-                  <img
-                    src={`${import.meta.env.VITE_API_URL}/images/${recipe.picture}`}
-                    alt={recipe.displayName}
-                  />
+                  {recipe.picture && (
+                    <img
+                      src={`${import.meta.env.VITE_API_URL}/images/${recipe.picture}`}
+                      alt={recipe.displayName}
+                    />
+                  )}
+
                   <h3>{recipe.displayName}</h3>
-                  <p><strong>Catégorie :</strong> {recipe.category}</p>
-                  <p><strong>Œuvre :</strong> {recipe.film_serie || "—"}</p>
+
+                  <p>
+                    <strong>Catégorie :</strong> {recipe.category}
+                  </p>
+
+                  <p>
+                    <strong>Auteur :</strong>{" "}
+                    {recipe.author || recipe.film_serie || "—"}
+                  </p>
+
                   <p>{recipe.description}</p>
                 </Link>
               ))

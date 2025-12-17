@@ -108,3 +108,17 @@
 .liked-recipes button:hover {
   background-color: #e6c200;
 }
+/* ============================= */
+/* LIENS DU PROFIL (fond sombre) */
+/* ============================= */
+
+.profile-container a,
+.profile-container a:visited {
+  color: #ffffff;           /* blanc */
+  text-decoration: none;
+}
+
+.profile-container a:hover {
+  color: #f5c16c;           /* doré clair au survol */
+  text-decoration: underline;
+}

@@ -2,119 +2,198 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import "./RecipeDetail.css";
-import CommentSection from "../components/CommentSection/CommentSection";
-import { jwtDecode } from "jwt-decode";
 
 function RecipeDetail() {
   const { id } = useParams();
+
   const [recipe, setRecipe] = useState(null);
-  const [user, setUser] = useState(null);
+  const [ingredients, setIngredients] = useState([]);
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState("");
   const [liked, setLiked] = useState(false);
+  const [loading, setLoading] = useState(true);
 
+  const API_URL =
+    import.meta.env.VITE_API_URL ||
+    `http://${window.location.hostname}:5002`;
+
+  const token = localStorage.getItem("token");
+
+  // =========================
+  // 🔄 CHARGEMENT DES DONNÉES
+  // =========================
   useEffect(() => {
-    // 🔄 Charger la recette
-    axios
-      .get(`${import.meta.env.VITE_API_URL}/recipes/${id}`)
-      .then((response) => setRecipe(response.data))
-      .catch((error) =>
-        console.error("❌ Erreur lors de la récupération de la recette :", error)
-      );
-
-    // 👤 Décoder le token utilisateur
-    const token = localStorage.getItem("token");
-    if (token) {
+    const fetchData = async () => {
       try {
-        const decoded = jwtDecode(token);
-        setUser(decoded);
+        // 🍽️ Recette
+        const recipeRes = await axios.get(`${API_URL}/recipes/${id}`);
+        setRecipe(recipeRes.data);
 
-        // ✅ Vérifie si la recette est déjà likée
-        axios
-          .get(`${import.meta.env.VITE_API_URL}/api/likes/${id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-          .then((res) => {
-            setLiked(res.data.liked);
-          })
-          .catch((err) => console.error("❌ Erreur like check :", err));
-      } catch (error) {
-        console.error("❌ Erreur lors du décodage du token :", error);
+        setIngredients(
+          Array.isArray(recipeRes.data.ingredients)
+            ? recipeRes.data.ingredients
+            : []
+        );
+
+        // 💬 Commentaires validés
+        const commentsRes = await axios.get(
+          `${API_URL}/api/comments/recipe/${id}`
+        );
+        setComments(commentsRes.data);
+
+        // ❤️ Like
+        if (token) {
+          const likeRes = await axios.get(
+            `${API_URL}/api/likes/${id}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          setLiked(likeRes.data.liked);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error("❌ Erreur chargement recette :", err);
+        setLoading(false);
       }
-    }
+    };
+
+    fetchData();
   }, [id]);
 
-  const handleToggleLike = async () => {
-    const token = localStorage.getItem("token");
+  // =========================
+  // ❤️ LIKE
+  // =========================
+  const toggleLike = async () => {
+    if (!token) {
+      alert("Vous devez être connecté pour liker une recette.");
+      return;
+    }
+
     try {
-      if (liked) {
-        await axios.delete(`${import.meta.env.VITE_API_URL}/api/likes`, {
-          headers: { Authorization: `Bearer ${token}` },
-          data: { recipeId: id }, // ✅ N'oublie pas "data" pour DELETE
-        });
-        setLiked(false);
-      } else {
-        await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/likes`,
-          { recipeId: id },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        setLiked(true);
-      }
-    } catch (error) {
-      console.error("❌ Erreur lors du like :", error);
+      const method = liked ? "delete" : "post";
+
+      const res = await axios({
+        method,
+        url: `${API_URL}/api/likes/${id}`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setLiked(res.data.liked);
+    } catch (err) {
+      console.error("❌ Erreur like :", err);
     }
   };
 
-  if (!recipe) return <p>Chargement...</p>;
+  // =========================
+  // 💬 AJOUT COMMENTAIRE
+  // =========================
+  const submitComment = async (e) => {
+    e.preventDefault();
+
+    if (!token) {
+      alert("Vous devez être connecté pour commenter.");
+      return;
+    }
+
+    if (newComment.trim().length < 2) {
+      alert("Commentaire trop court.");
+      return;
+    }
+
+    try {
+      await axios.post(
+        `${API_URL}/api/comments/recipe/${id}`,
+        { description: newComment },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      alert("💬 Commentaire envoyé (en attente de validation)");
+      setNewComment("");
+    } catch (err) {
+      console.error("❌ Erreur envoi commentaire :", err);
+    }
+  };
+
+  if (loading) return <p>Chargement...</p>;
+  if (!recipe) return <p>Recette introuvable.</p>;
 
   return (
     <div className="recipe-detail">
-      <h1>{recipe.recipe_name}</h1>
+      {/* ❤️ LIKE */}
+      <button
+        className={`like-button ${liked ? "liked" : ""}`}
+        onClick={toggleLike}
+        type="button"
+      >
+        {liked ? "❤️" : "🤍"}
+      </button>
 
-      <img
-        src={`${import.meta.env.VITE_API_URL}/images/${recipe.picture}`}
-        alt={recipe.recipe_name}
-        className="recipe-image"
-      />
+      <h1>{recipe.name}</h1>
+
+      {recipe.picture && (
+        <img
+          src={`${API_URL}/images/${recipe.picture}`}
+          alt={recipe.name}
+          className="recipe-image"
+        />
+      )}
 
       <p><strong>Catégorie :</strong> {recipe.category}</p>
-      <p><strong>Inspiré de :</strong> {recipe.film_serie}</p>
-      <p><strong>Description :</strong> {recipe.description}</p>
+      <p><strong>Auteur :</strong> {recipe.author}</p>
+      <p>{recipe.description}</p>
 
-      {recipe.ingredients ? (
-        <div>
-          <h2>🛒 Ingrédients :</h2>
-          <ul>
-            {recipe.ingredients.split(", ").map((item, index) => (
-              <li key={index}>{item}</li>
+      {/* 🧂 INGRÉDIENTS */}
+      <h2>Ingrédients</h2>
+      <ul>
+        {ingredients.map((ing, i) => (
+          <li key={i}>
+            {ing.name} – {ing.quantity}
+          </li>
+        ))}
+      </ul>
+
+      {/* 📖 INSTRUCTIONS */}
+      <h2>Instructions</h2>
+      <p>{recipe.instruction}</p>
+
+      {/* 💬 COMMENTAIRES */}
+      <section className="comments-section">
+        <h2>💬 Commentaires</h2>
+
+        {comments.length === 0 ? (
+          <p>Aucun commentaire pour le moment.</p>
+        ) : (
+          <ul className="comments-list">
+            {comments.map((c) => (
+              <li key={c.code_comment}>
+                <strong>{c.pseudo}</strong> : {c.description}
+              </li>
             ))}
           </ul>
-        </div>
-      ) : (
-        <p>❌ Aucun ingrédient renseigné.</p>
-      )}
+        )}
+      </section>
 
-      {recipe.instruction ? (
-        <div>
-          <h2>👨‍🍳 Instructions :</h2>
-          <p style={{ whiteSpace: "pre-line" }}>{recipe.instruction}</p>
-        </div>
-      ) : (
-        <p>❌ Aucune instruction disponible.</p>
-      )}
+      {/* ✍️ FORMULAIRE COMMENTAIRE */}
+      <section className="comment-form">
+        <h3>Laisser un commentaire</h3>
 
-      {/* ❤️ Bouton "Ajouter aux favoris" */}
-      {user && (
-        <div className="like-section">
-          <button className="like-button" onClick={handleToggleLike}>
-            {liked ? "❤️ Retirer des favoris" : "🤍 Ajouter aux favoris"}
-          </button>
-        </div>
-      )}
+        <form onSubmit={submitComment}>
+          <textarea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Votre commentaire..."
+            rows="4"
+          />
 
-      {/* 💬 Commentaires */}
-      <CommentSection recipeId={recipe.code_recipe} user={user} />
+          <button type="submit">Envoyer</button>
+        </form>
+      </section>
     </div>
   );
 }
